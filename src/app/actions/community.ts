@@ -1,8 +1,8 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/server-db";
+import { createAdminClient } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { allow, audit } from "@/lib/security";
 import { authorize, isUuid, notify } from "@/lib/semester";

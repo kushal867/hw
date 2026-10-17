@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FileText, Search } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { EmptyState, ErrorState, NotConfigured, PageHeader, Pagination } from "@/components/ui/misc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { isConfigured } from "@/lib/env";
 import { CATEGORIES, formatBytes, formatDate } from "@/lib/format";
 

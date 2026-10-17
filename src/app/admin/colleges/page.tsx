@@ -1,6 +1,6 @@
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { PageHeader } from "@/components/ui/misc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 import { addCollege, addCourse, addSemester, addSubject, archiveRecord, assignOwner } from "@/app/actions/admin";
 
 export const metadata = { title: "Colleges & courses" };

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { FileText } from "lucide-react";
 import { PageHeader } from "@/components/ui/misc";
 import { isUuid, semesterAccess } from "@/lib/semester";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { CATEGORIES, QUESTION_TYPES } from "@/lib/format";
 
 export default async function SubjectPage({ params }: { params: Promise<{ id: string }> }) {

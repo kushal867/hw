@@ -1,6 +1,6 @@
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { PageHeader } from "@/components/ui/misc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { completeDeletion, restrictUser } from "@/app/actions/admin";
 

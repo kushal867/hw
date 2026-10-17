@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BookMarked, FileText, MessagesSquare, Users } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { semesterAccess } from "@/lib/semester";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { leaveSemester } from "@/app/actions/semesters";
 
 export default async function Overview({ params }: { params: Promise<{ id: string }> }) {

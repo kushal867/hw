@@ -4,7 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { JoinByLink } from "@/components/join-by-link";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { requestGroup } from "@/app/actions/semesters";
 
 export const metadata = { title: "My Semesters" };

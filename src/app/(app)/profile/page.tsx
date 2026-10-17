@@ -4,7 +4,7 @@ import { AvatarUpload } from "@/components/avatar-upload";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { BADGES, formatDate } from "@/lib/format";
 import { updateProfile } from "@/app/actions/account";
 

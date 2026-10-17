@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Building2, Search } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { EmptyState, ErrorState, NotConfigured, PageHeader } from "@/components/ui/misc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { isConfigured } from "@/lib/env";
 
 export const metadata = { title: "Colleges" };

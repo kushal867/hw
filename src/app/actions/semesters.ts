@@ -2,8 +2,8 @@
 import { revalidatePath } from "next/cache";
 import QRCode from "qrcode";
 import { z } from "zod";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/db";
+import { createClient } from "@/lib/server-db";
 import { requireUser } from "@/lib/auth";
 import { allow, hashToken, newInviteToken } from "@/lib/security";
 import { authorize, isUuid, notify } from "@/lib/semester";
@@ -49,7 +49,7 @@ export async function joinWithToken(token: string): Promise<ActionResult> {
   if (!(await allow(user.id, "invite.redeem", 15, 600))) return { ok: false, message: "Too many attempts. Please wait a few minutes." };
   const { data, error } = await createAdminClient().rpc("redeem_invite", { p_token_hash: hashToken(token), p_user: user.id });
   if (error) return { ok: false, message: "Something went wrong. Please try again." };
-  const r = data as { status: string; semester_id?: string };
+  const r = data as unknown as { status: string; semester_id?: string };
   switch (r.status) {
     case "joined": return { ok: true, message: "You've joined the semester!", redirect: `/semesters/${r.semester_id}` };
     case "already_member": return { ok: true, message: "You're already a member.", redirect: `/semesters/${r.semester_id}` };

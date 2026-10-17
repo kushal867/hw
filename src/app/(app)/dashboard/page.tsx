@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Check, Circle, FileDown, MessagesSquare, QrCode, Upload, FileText } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { formatDate } from "@/lib/format";
 
 export const metadata = { title: "Dashboard" };

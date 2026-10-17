@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download, Flag } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { CATEGORIES, formatBytes, formatDate } from "@/lib/format";
 
 export default async function NotePage({ params }: { params: Promise<{ id: string }> }) {

@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomBytes } from "crypto";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 
 /** 256-bit URL-safe random token. Only its SHA-256 hash is stored. */
 export const newInviteToken = () => randomBytes(32).toString("base64url");
@@ -12,7 +12,7 @@ export async function allow(userId: string, bucket: string, max: number, windowS
   const { data, error } = await createAdminClient().rpc("check_rate_limit", {
     p_user: userId, p_bucket: bucket, p_max: max, p_window_seconds: windowSeconds,
   });
-  return error ? false : data === true; // fail closed
+  return error ? false : (data as unknown) === true; // fail closed
 }
 
 export async function audit(actor: string | null, action: string, targetType: string, targetId: string, metadata: object = {}) {

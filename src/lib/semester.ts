@@ -1,10 +1,10 @@
 import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { requireUser, getMembership } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import type { ActionResult } from "@/components/ui/action-form";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export const isUuid = (s: string) => UUID.test(s);

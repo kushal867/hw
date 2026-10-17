@@ -1,7 +1,7 @@
 import { PdfMaker } from "@/components/pdf-maker";
 import { PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 
 export const metadata = { title: "PDF Maker" };
 

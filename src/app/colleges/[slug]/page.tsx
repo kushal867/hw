@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { GraduationCap } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 
 export default async function College({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

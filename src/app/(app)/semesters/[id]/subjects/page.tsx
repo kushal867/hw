@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Library } from "lucide-react";
 import { EmptyState } from "@/components/ui/misc";
 import { semesterAccess } from "@/lib/semester";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 
 export const metadata = { title: "Subjects" };
 

@@ -6,7 +6,8 @@ PostgreSQL 15+. Migrations live in `supabase/migrations/` and run in order:
 |---|---|
 | `0001_schema.sql` | Tables, constraints, indexes |
 | `0002_rls_and_functions.sql` | Grants, Row Level Security, triggers, trusted functions, `public_notes` view, private `documents` bucket |
-| `0003_avatars_bucket.sql` | Public `avatars` bucket, realtime publication |
+| `0003_avatars_bucket.sql` | Public `avatars` bucket row (legacy; files now live on disk) |
+| `0004_local_auth.sql` | Password hashes, `auth.sessions`, `auth.tokens` (self-hosted auth) |
 
 All timestamps are `timestamptz` (UTC). The UI formats them in Nepal time (`Asia/Kathmandu`).
 
@@ -40,7 +41,7 @@ colleges 1─* courses 1─* semesters 1─* subjects
 
 ## Roles and authorization model
 
-Three database roles are expected (Supabase provides them): `anon`, `authenticated`, `service_role`.
+Three database roles are used (created by `supabase/tests_stub.sql`): `anon`, `authenticated`, `service_role`.
 
 - **Browser / user-scoped server client** → `authenticated`; every table has RLS enabled.
 - **Server-only privileged code** → `service_role` (bypasses RLS). Used for: document inserts after file validation,
@@ -90,28 +91,28 @@ Trigger `guard_last_owner` makes it impossible to remove or demote the last acti
 - Publication flow: uploader requests → `moderation_status='pending'` → admin approves (sets `visibility='public'`, `published_at`).
   Homework/assignments/lab reports are not eligible for publication.
 
-## Using your own PostgreSQL server
+## Running on your own server (what this deployment uses)
 
-The SQL depends on a few Supabase-provided pieces. If you host Postgres yourself you must provide equivalents:
+The app no longer uses Supabase. It talks to Postgres directly (`src/lib/db.ts`) and keeps the same security model:
 
-1. **`auth.users` table and `auth.uid()`** — `profiles.id` references `auth.users`; policies call `auth.uid()`.
-   Plain-Postgres option: create an `auth` schema with a `users` table and an `auth.uid()` function reading
-   `current_setting('request.jwt.claim.sub', true)` (this is exactly how `supabase/tests_stub.sql` does it), and have your
-   API set that setting per request (`set_config(..., true)` inside the transaction) and `SET LOCAL ROLE authenticated`.
-2. **Roles** `anon`, `authenticated`, `service_role` (`bypassrls`).
-3. **Storage** — `0002`/`0003` insert into `storage.buckets`. Without Supabase Storage, remove those statements and
-   store PDFs on disk/S3 with the same rules (private, server-chosen path, access only via the two routes above).
-4. **Realtime** — the publication statement is skipped automatically if `supabase_realtime` does not exist.
-5. **Auth signup trigger** — `handle_new_user` fires on `auth.users` inserts to create the profile.
-
-The application code currently talks to Supabase (Auth, PostgREST, Storage). Moving to a fully self-hosted stack means
-self-hosting Supabase (recommended: same code works) or replacing those client calls with your own API layer.
+- One login role, `edusathi_app`, is a member of `anon`, `authenticated` and `service_role`. For each query the app opens a
+  transaction, runs `SET LOCAL ROLE <role>` and sets `request.jwt.claim.sub` to the signed-in user id, so **RLS and `auth.uid()`
+  behave exactly as in the policies**. Logged-out visitors run as `anon`; trusted server code runs as `service_role`.
+- `0004_local_auth.sql` adds password hashes (scrypt), `auth.sessions` (SHA-256 of an HttpOnly cookie token) and `auth.tokens`
+  (single-use email-verification / password-reset tokens). Only `service_role` can read these tables.
+- PDFs and avatars are stored on disk under `STORAGE_DIR` (`documents/` private, `avatars/` public) and are served only by the routes above.
+- Setup: `create role edusathi_app login password '…' in role anon, authenticated, service_role;` then apply `tests_stub.sql`
+  (creates the `auth`/`storage` schemas and roles) and the migrations in order. `scripts/deploy.sh` ships the app; see the README.
 
 ## Testing the database
 
 ```bash
 # needs a Postgres you can create databases on
 PGHOST=... PGPORT=... PGUSER=postgres scripts/test-db.sh
+
+# optional: exercise the query layer (embeds, RLS per user, rpc) against that database
+psql -d edusathi_test -f supabase/tests/fixtures.sql
+TEST_DATABASE_URL=postgres://edusathi_app:...@host/edusathi_test npm test
 ```
 
 Applies all migrations on top of `supabase/tests_stub.sql` and runs `supabase/tests/rls.test.sql`, which proves with

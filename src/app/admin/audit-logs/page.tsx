@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/ui/misc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 
 export const metadata = { title: "Audit & abuse" };

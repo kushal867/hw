@@ -1,9 +1,10 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { adminSql, createAdminClient } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { audit } from "@/lib/security";
+import { removeFiles } from "@/lib/storage";
 import { isUuid, notify } from "@/lib/semester";
 import { slugify } from "@/lib/format";
 import type { ActionResult } from "@/components/ui/action-form";
@@ -64,8 +65,14 @@ export async function completeDeletion(requestId: string): Promise<ActionResult>
   const { data: r } = await db.from("deletion_requests").select("user_id,status").eq("id", requestId).maybeSingle();
   if (!r || r.status !== "open") return { ok: false, message: "Request not open." };
   const { data: files } = await db.from("documents").select("storage_path").eq("uploaded_by", r.user_id);
-  if (files?.length) await db.storage.from("documents").remove(files.map((f) => f.storage_path));
-  const { error } = await db.auth.admin.deleteUser(r.user_id);   // cascades profile, posts, documents rows
+  const { data: prof } = await db.from("profiles").select("avatar_path").eq("id", r.user_id).maybeSingle();
+  let error: { message: string } | null = null;
+  try { await adminSql("delete from auth.users where id = $1", [r.user_id]); }   // cascades profile, posts, documents rows
+  catch (e: any) { error = { message: String(e?.message ?? "") }; }
+  if (!error) {
+    if (files?.length) await removeFiles("documents", files.map((f: { storage_path: string }) => f.storage_path));
+    if (prof?.avatar_path) await removeFiles("avatars", [prof.avatar_path]);
+  }
   if (error) return { ok: false, message: error.message.includes("owner") ? "User owns a semester: transfer ownership first." : "Deletion failed." };
   await audit(user.id, "user.delete", "user", r.user_id, { request: requestId });
   revalidatePath("/admin/users");

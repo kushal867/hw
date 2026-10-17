@@ -1,15 +1,13 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
-/** Refreshes server data when new rows arrive. Realtime applies RLS per subscriber, so only authorised members get events. */
-export function LiveRefresh({ table, filter }: { table: string; filter: string }) {
+/** Re-fetches server data periodically while the tab is visible, so new posts and replies appear without a manual reload. */
+export function LiveRefresh({ seconds = 15 }: { table?: string; filter?: string; seconds?: number }) {
   const router = useRouter();
   useEffect(() => {
-    const supabase = createClient();
-    const ch = supabase.channel(`${table}:${filter}`).on("postgres_changes", { event: "*", schema: "public", table, filter }, () => router.refresh()).subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [table, filter, router]);
+    const id = setInterval(() => { if (document.visibilityState === "visible") router.refresh(); }, seconds * 1000);
+    return () => clearInterval(id);
+  }, [seconds, router]);
   return null;
 }

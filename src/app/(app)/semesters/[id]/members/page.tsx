@@ -1,6 +1,6 @@
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { semesterAccess } from "@/lib/semester";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { BADGES, formatDate } from "@/lib/format";
 import { decideRequest, removeMember, setRole } from "@/app/actions/semesters";
 

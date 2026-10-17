@@ -3,7 +3,7 @@ import { MessageSquarePlus, MessagesSquare, Search } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { EmptyState, ErrorState, Pagination } from "@/components/ui/misc";
 import { semesterAccess } from "@/lib/semester";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { POST_TYPES, formatDate } from "@/lib/format";
 import { createPost } from "@/app/actions/community";
 

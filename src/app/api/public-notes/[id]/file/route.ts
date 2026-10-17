@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/server-db";
+import { createAdminClient } from "@/lib/db";
 import { servePdf } from "@/lib/serve-file";
 
 // Public path: serves a file ONLY if the public_notes view (approved + public) lists it.

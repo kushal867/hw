@@ -1,7 +1,7 @@
 import { FileCheck } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 import { CATEGORIES, formatBytes, formatDate } from "@/lib/format";
 import { reviewDocument } from "@/app/actions/admin";
 

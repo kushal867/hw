@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { logOut, updatePassword } from "@/app/actions/auth";
 import { requestDeletion } from "@/app/actions/account";
 
