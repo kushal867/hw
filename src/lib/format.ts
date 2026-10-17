@@ -20,3 +20,6 @@ export const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+
 
 // Academic-integrity guard: graded personal work is never eligible for the public library.
 export const PUBLISHABLE = new Set(["lecture_notes", "previous_papers", "important_questions", "revision_notes", "other"]);
+
+/** "Semester 3" / "Year 2": programs name their terms differently (see courses.term_label). */
+export const termName = (label: string | null | undefined, n: number | string) => `${label ?? "Semester"} ${n}`;

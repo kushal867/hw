@@ -1,3 +1,4 @@
+import { termName } from "@/lib/format";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { SemesterTabs } from "@/components/semester-tabs";
@@ -8,7 +9,7 @@ export default async function SemesterLayout({ children, params }: { children: R
   const { id } = await params;
   const sem = await loadSemester(id);
   const a = await semesterAccess(id);
-  const title = `${sem.courses.name} · Semester ${sem.semester_number}`;
+  const title = `${sem.courses.name} · ${termName(sem.courses.term_label, sem.semester_number)}`;
   if (!a.canRead) {
     // Non-members learn nothing beyond the public hierarchy label.
     return (

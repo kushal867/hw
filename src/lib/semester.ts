@@ -12,7 +12,7 @@ export const isUuid = (s: string) => UUID.test(s);
 export const loadSemester = cache(async (id: string) => {
   if (!isUuid(id)) notFound();
   const { data } = await (await createClient()).from("semesters")
-    .select("id, semester_number, academic_year, requires_approval, courses(id, name, colleges(id, name, slug))").eq("id", id).maybeSingle();
+    .select("id, semester_number, academic_year, requires_approval, courses(id, name, term_label, colleges(id, name, slug))").eq("id", id).maybeSingle();
   if (!data) notFound();
   return data as any;
 });

@@ -41,10 +41,11 @@ insert into courses (college_id, name, slug, degree_level)
 select c.id, o.course, o.slug, 'Bachelor' from offer o join colleges c on c.slug = o.college_slug
 on conflict do nothing;
 
--- 3) Semesters 1-8 for the 8-semester programs (BIT, BCA, BIM, BBA). BBS (TU) runs in yearly terms: none created.
+-- 3) Terms: BIT/BCA/BIM/BBA have 8 semesters; BBS (TU) runs in 4 yearly terms, labelled "Year" (courses.term_label, migration 0006).
+update courses set term_label = 'Year' where slug = 'bbs';
 insert into semesters (course_id, semester_number)
-select c.id, n from courses c cross join generate_series(1, 8) n
-where c.slug in ('bit', 'bca', 'bim', 'bba')
+select c.id, n from courses c cross join generate_series(1, case when c.slug = 'bbs' then 4 else 8 end) n
+where c.slug in ('bit', 'bca', 'bim', 'bba', 'bbs')
   and not exists (select 1 from semesters s where s.course_id = c.id and s.semester_number = n);
 
 -- 4) Starter subjects (same TU syllabus at every college offering the program)
@@ -66,8 +67,15 @@ join courses c on c.slug = v.course_slug
 join semesters s on s.course_id = c.id and s.semester_number = v.sem
 on conflict do nothing;
 
--- 5) Virinchi College (Lalitpur): not TU-affiliated; no semesters/subjects seeded (structure unconfirmed).
+-- 5) Virinchi College (Lalitpur): not TU-affiliated. Semesters assume the usual structure (BICT 8, MBA 4); adjust in /admin/colleges if it differs. No subjects seeded.
 insert into colleges (name, city, slug, country) values ('Virinchi College', 'Lalitpur', 'virinchi-college-lalitpur', 'NP') on conflict do nothing;
 insert into courses (college_id, name, slug, degree_level)
 select id, v.name, v.slug, v.level from colleges, (values ('BICT (Software Engineering)', 'bict-software-engineering', 'Bachelor'), ('MBA (Entrepreneurship)', 'mba-entrepreneurship', 'Master')) v(name, slug, level)
 where colleges.slug = 'virinchi-college-lalitpur' on conflict do nothing;
+
+-- Semesters for Virinchi's programs
+insert into semesters (course_id, semester_number)
+select c.id, n from courses c join colleges o on o.id = c.college_id
+cross join generate_series(1, case when c.slug = 'mba-entrepreneurship' then 4 else 8 end) n
+where o.slug = 'virinchi-college-lalitpur'
+  and not exists (select 1 from semesters s where s.course_id = c.id and s.semester_number = n);

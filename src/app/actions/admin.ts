@@ -94,9 +94,9 @@ export async function addCollege(fd: FormData): Promise<ActionResult> {
 }
 export async function addCourse(fd: FormData): Promise<ActionResult> {
   await requireAdmin();
-  const p = z.object({ college: z.string().refine(isUuid, "Choose a college."), name: z.string().trim().min(2).max(120), level: z.string().trim().max(40) }).safeParse(Object.fromEntries(fd));
+  const p = z.object({ college: z.string().refine(isUuid, "Choose a college."), name: z.string().trim().min(2).max(120), level: z.string().trim().max(40), term: z.enum(["Semester", "Year"]).default("Semester") }).safeParse(Object.fromEntries(fd));
   if (!p.success) return { ok: false, message: p.error.issues[0].message };
-  const { error } = await createAdminClient().from("courses").insert({ college_id: p.data.college, name: p.data.name, slug: slugify(p.data.name), degree_level: p.data.level || null });
+  const { error } = await createAdminClient().from("courses").insert({ college_id: p.data.college, name: p.data.name, slug: slugify(p.data.name), degree_level: p.data.level || null, term_label: p.data.term });
   if (error) return { ok: false, message: dup(error) };
   revalidatePath("/admin/colleges");
   return { ok: true, message: "Course added." };

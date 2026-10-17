@@ -6,6 +6,7 @@ import { JoinByLink } from "@/components/join-by-link";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/server-db";
+import { termName } from "@/lib/format";
 import { requestGroup } from "@/app/actions/semesters";
 
 export const metadata = { title: "My Semesters" };
@@ -14,12 +15,12 @@ export default async function MySemesters() {
   const { profile } = await requireUser();
   const supabase = await createClient();
   const { data: mine } = await supabase.from("semester_members")
-    .select("role, membership_status, semesters(id, semester_number, academic_year, courses(name, colleges(name)))").eq("user_id", profile.id);
-  const { data: all } = await supabase.from("semesters").select("id, semester_number, academic_year, courses(id, name, colleges(id, name))").limit(500);
+    .select("role, membership_status, semesters(id, semester_number, academic_year, courses(name, term_label, colleges(name)))").eq("user_id", profile.id);
+  const { data: all } = await supabase.from("semesters").select("id, semester_number, academic_year, courses(id, name, term_label, colleges(id, name))").limit(500);
   const options = (all ?? []) as any[];
   // Linked pickers: derive each level from the semester → course → college chain.
   const colleges = [...new Map(options.filter((s) => s.courses?.colleges).map((s) => [s.courses.colleges.id, { id: s.courses.colleges.id, name: s.courses.colleges.name }])).values()].sort((a, b) => a.name.localeCompare(b.name));
-  const courses = [...new Map(options.filter((s) => s.courses).map((s) => [s.courses.id, { id: s.courses.id, name: s.courses.name, college_id: s.courses.colleges?.id }])).values()].sort((a, b) => a.name.localeCompare(b.name));
+  const courses = [...new Map(options.filter((s) => s.courses).map((s) => [s.courses.id, { id: s.courses.id, name: s.courses.name, college_id: s.courses.colleges?.id, term_label: s.courses.term_label }])).values()].sort((a, b) => a.name.localeCompare(b.name));
   const semesterRows = options.map((s) => ({ id: s.id, semester_number: s.semester_number, academic_year: s.academic_year, course_id: s.courses?.id }));
   return (
     <>
@@ -32,9 +33,9 @@ export default async function MySemesters() {
             {m.membership_status === "active" ? (
               <Link href={`/semesters/${m.semesters.id}`} className="card block p-5 hover:border-brand-200">
                 <p className="text-xs text-muted">{m.semesters.courses?.colleges?.name}</p>
-                <p className="font-semibold">{m.semesters.courses?.name} · Semester {m.semesters.semester_number}</p><span className="badge mt-2 capitalize">{m.role}</span></Link>
+                <p className="font-semibold">{m.semesters.courses?.name} · {termName(m.semesters.courses?.term_label, m.semesters.semester_number)}</p><span className="badge mt-2 capitalize">{m.role}</span></Link>
             ) : (
-              <div className="card p-5"><p className="font-semibold">{m.semesters.courses?.name} · Semester {m.semesters.semester_number}</p>
+              <div className="card p-5"><p className="font-semibold">{m.semesters.courses?.name} · {termName(m.semesters.courses?.term_label, m.semesters.semester_number)}</p>
                 <span className="badge mt-2">{m.membership_status === "pending" ? "Waiting for approval" : "Removed"}</span></div>)}
           </li>))}</ul>)}
       <section className="card p-5"><h2 className="mb-1 font-semibold">Request a group for your semester</h2>

@@ -4,13 +4,14 @@ import { GraduationCap } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { createClient } from "@/lib/server-db";
+import { termName } from "@/lib/format";
 
 export default async function College({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
   const { data: college } = await supabase.from("colleges").select("id,name,city,logo_path").eq("slug", slug).maybeSingle();
   if (!college) notFound();
-  const { data: courses } = await supabase.from("courses").select("id,name,degree_level,semesters(id,semester_number,academic_year)").eq("college_id", college.id).order("name");
+  const { data: courses } = await supabase.from("courses").select("id,name,degree_level,term_label,semesters(id,semester_number,academic_year)").eq("college_id", college.id).order("name");
   return (<><SiteHeader /><main id="main" className="mx-auto max-w-6xl px-4 py-10">
     {college.logo_path && (
       // eslint-disable-next-line @next/next/no-img-element
@@ -22,7 +23,7 @@ export default async function College({ params }: { params: Promise<{ slug: stri
           <h2 id={`c-${c.id}`} className="font-semibold">{c.name} {c.degree_level && <span className="badge ml-2">{c.degree_level}</span>}</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
             {[...(c.semesters ?? [])].sort((a, b) => a.semester_number - b.semester_number).map((s) => (
-              <li key={s.id}><Link href={`/semesters/${s.id}`} className="btn-secondary !min-h-[36px]">Semester {s.semester_number}{s.academic_year ? ` · ${s.academic_year}` : ""}</Link></li>))}
+              <li key={s.id}><Link href={`/semesters/${s.id}`} className="btn-secondary !min-h-[36px]">{termName(c.term_label, s.semester_number)}{s.academic_year ? ` · ${s.academic_year}` : ""}</Link></li>))}
             {!c.semesters?.length && <li className="text-sm text-muted">No semesters yet.</li>}
           </ul>
         </section>))}</div>)}

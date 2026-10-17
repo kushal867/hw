@@ -11,19 +11,19 @@ export default async function Colleges() {
   const [{ data: colleges }, { data: courses }, { data: sems }, { data: reqs }] = await Promise.all([
     db.from("colleges").select("id,name,city,status,logo_path").order("name"),
     db.from("courses").select("id,name,status,college_id,colleges(name)").order("name"),
-    db.from("semesters").select("id,semester_number,academic_year,status,courses(name,colleges(name)),subjects(id,name,status)").order("semester_number").limit(500),
-    db.from("semester_requests").select("id,requester_id,semester_id,note,profiles(display_name),semesters(semester_number,courses(name))").eq("status", "open").limit(50),
+    db.from("semesters").select("id,semester_number,academic_year,status,courses(name,term_label,colleges(name)),subjects(id,name,status)").order("semester_number").limit(500),
+    db.from("semester_requests").select("id,requester_id,semester_id,note,profiles(display_name),semesters(semester_number,courses(name,term_label))").eq("status", "open").limit(50),
   ]);
   const Sel = ({ name, items, label }: { name: string; label: string; items: { id: string; label: string }[] }) => (
     <div><label htmlFor={name} className="label">{label}</label><select id={name} name={name} required className="input"><option value="">Choose…</option>{items.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}</select></div>);
-  const semItems = (sems ?? []).map((s: any) => ({ id: s.id, label: `${s.courses?.colleges?.name} — ${s.courses?.name} S${s.semester_number}${s.academic_year ? ` (${s.academic_year})` : ""}` }));
+  const semItems = (sems ?? []).map((s: any) => ({ id: s.id, label: `${s.courses?.colleges?.name} — ${s.courses?.name} ${s.courses?.term_label === "Year" ? "Y" : "S"}${s.semester_number}${s.academic_year ? ` (${s.academic_year})` : ""}` }));
   return (<>
     <PageHeader title="Colleges, courses, semesters & subjects" />
     <div className="grid gap-6 lg:grid-cols-2">
       <ActionForm action={addCollege} resetOnSuccess className="card space-y-3 p-4"><h2 className="font-semibold">Add college</h2>
         <div><label htmlFor="name" className="label">Name</label><input id="name" name="name" required className="input" /></div><div><label htmlFor="city" className="label">City</label><input id="city" name="city" className="input" /></div><SubmitButton>Add college</SubmitButton></ActionForm>
       <ActionForm action={addCourse} resetOnSuccess className="card space-y-3 p-4"><h2 className="font-semibold">Add course</h2>
-        <Sel name="college" label="College" items={(colleges ?? []).map((c) => ({ id: c.id, label: c.name }))} /><div><label htmlFor="cname" className="label">Course (e.g. BIT)</label><input id="cname" name="name" required className="input" /></div><div><label htmlFor="level" className="label">Degree level</label><input id="level" name="level" placeholder="Bachelor" className="input" /></div><SubmitButton>Add course</SubmitButton></ActionForm>
+        <Sel name="college" label="College" items={(colleges ?? []).map((c) => ({ id: c.id, label: c.name }))} /><div><label htmlFor="cname" className="label">Course (e.g. BIT)</label><input id="cname" name="name" required className="input" /></div><div><label htmlFor="level" className="label">Degree level</label><input id="level" name="level" placeholder="Bachelor" className="input" /></div><div><label htmlFor="term" className="label">Terms are called</label><select id="term" name="term" className="input"><option value="Semester">Semester (1, 2, 3…)</option><option value="Year">Year (Year 1, 2, 3…)</option></select></div><SubmitButton>Add course</SubmitButton></ActionForm>
       <ActionForm action={addSemester} resetOnSuccess className="card space-y-3 p-4"><h2 className="font-semibold">Add semester</h2>
         <Sel name="course" label="Course" items={(courses ?? []).map((c: any) => ({ id: c.id, label: `${c.colleges?.name} — ${c.name}` }))} /><div><label htmlFor="number" className="label">Semester number</label><input id="number" name="number" type="number" min={1} max={12} required className="input" /></div><div><label htmlFor="year" className="label">Academic year / batch</label><input id="year" name="year" placeholder="2082" className="input" /></div><SubmitButton>Add semester</SubmitButton></ActionForm>
       <ActionForm action={addSubject} resetOnSuccess className="card space-y-3 p-4"><h2 className="font-semibold">Add subject</h2>
@@ -31,7 +31,7 @@ export default async function Colleges() {
     </div>
     <section className="mt-8"><h2 className="mb-3 font-semibold">Group requests</h2>
       {!reqs?.length ? <p className="text-sm text-muted">No open requests.</p> : <ul className="space-y-2">{reqs.map((r: any) => (
-        <li key={r.id} className="card flex flex-wrap items-center gap-3 p-3 text-sm"><span><strong>{r.profiles?.display_name}</strong> wants {r.semesters?.courses?.name} S{r.semesters?.semester_number}{r.note && ` — “${r.note}”`}</span>
+        <li key={r.id} className="card flex flex-wrap items-center gap-3 p-3 text-sm"><span><strong>{r.profiles?.display_name}</strong> wants {r.semesters?.courses?.name} {r.semesters?.courses?.term_label === "Year" ? "Year" : "S"}{r.semesters?.courses?.term_label === "Year" ? " " : ""}{r.semesters?.semester_number}{r.note && ` — “${r.note}”`}</span>
           <div className="ml-auto"><ActionForm action={async () => { "use server"; return assignOwner(r.semester_id, r.requester_id); }} confirm="Make this student the owner of the group?"><SubmitButton>Approve as owner</SubmitButton></ActionForm></div></li>))}</ul>}</section>
     <section className="mt-8"><h2 className="mb-3 font-semibold">Existing records</h2>
       <ul className="space-y-3">{(colleges ?? []).map((c) => (

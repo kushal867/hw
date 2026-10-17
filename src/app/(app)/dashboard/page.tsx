@@ -1,3 +1,4 @@
+import { termName } from "@/lib/format";
 import Link from "next/link";
 import { Check, Circle, FileDown, MessagesSquare, QrCode, Upload, FileText } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
@@ -11,7 +12,7 @@ export default async function Dashboard() {
   const { profile } = await requireUser();
   const supabase = await createClient();
   const { data: memberships } = await supabase.from("semester_members")
-    .select("role, semesters(id, semester_number, academic_year, courses(name, colleges(name)))").eq("user_id", profile.id).eq("membership_status", "active");
+    .select("role, semesters(id, semester_number, academic_year, courses(name, term_label, colleges(name)))").eq("user_id", profile.id).eq("membership_status", "active");
   const semIds = (memberships ?? []).map((m: any) => m.semesters?.id).filter(Boolean);
   // RLS already limits these to the user's semesters; the in() filter just scopes the dashboard.
   const [docs, posts, qs] = semIds.length ? await Promise.all([
@@ -51,7 +52,7 @@ export default async function Dashboard() {
           <ul className="grid gap-4 sm:grid-cols-2">{memberships.map((m: any) => (
             <li key={m.semesters.id}><Link href={`/semesters/${m.semesters.id}`} className="card block p-5 hover:border-brand-200">
               <p className="text-xs text-muted">{m.semesters.courses?.colleges?.name}</p>
-              <p className="font-semibold">{m.semesters.courses?.name} · Semester {m.semesters.semester_number}</p>
+              <p className="font-semibold">{m.semesters.courses?.name} · {termName(m.semesters.courses?.term_label, m.semesters.semester_number)}</p>
               <span className="badge mt-2 capitalize">{m.role}</span></Link></li>))}</ul>)}
       </section>
 

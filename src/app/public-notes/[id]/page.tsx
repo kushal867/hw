@@ -1,3 +1,4 @@
+import { termName } from "@/lib/format";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download, Flag } from "lucide-react";
@@ -13,7 +14,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
   return (<><SiteHeader /><main id="main" className="mx-auto max-w-5xl px-4 py-10">
     <span className="badge">{CATEGORIES[n.category]}</span>
     <h1 className="mt-2 text-2xl font-bold">{n.title}</h1>
-    <p className="mt-1 text-sm text-muted">{[n.college_name, n.course_name, `Semester ${n.semester_number}`, n.subject_name].filter(Boolean).join(" · ")}</p>
+    <p className="mt-1 text-sm text-muted">{[n.college_name, n.course_name, termName(n.term_label, n.semester_number), n.subject_name].filter(Boolean).join(" · ")}</p>
     <p className="mt-1 text-xs text-muted">Shared by {n.uploader_name} · {formatBytes(n.size_bytes)} · {formatDate(n.published_at)}</p>
     {n.description && <p className="mt-4 whitespace-pre-line">{n.description}</p>}
     <div className="mt-5 flex gap-2">

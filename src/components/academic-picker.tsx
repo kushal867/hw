@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 type College = { id: string; name: string };
-type Course = { id: string; name: string; college_id: string };
+type Course = { id: string; name: string; college_id: string; term_label?: string | null };
 type Semester = { id: string; semester_number: number; academic_year?: string | null; course_id: string };
 
 /**
@@ -20,6 +20,7 @@ export function AcademicPicker({ colleges, courses, semesters, initial, required
   const [college, setCollege] = useState(initial?.college ?? startCourse?.college_id ?? "");
   const [course, setCourse] = useState(startCourse?.id ?? "");
   const [semester, setSemester] = useState(startSem?.id ?? "");
+  const termWord = courses.find((c) => c.id === course)?.term_label ?? "Semester";
   const myCourses = courses.filter((c) => c.college_id === college);
   const mySemesters = semesters.filter((s) => s.course_id === course).sort((a, b) => a.semester_number - b.semester_number);
   return (
@@ -34,11 +35,11 @@ export function AcademicPicker({ colleges, courses, semesters, initial, required
           onChange={(e) => { setCourse(e.target.value); setSemester(""); }}>
           <option value="">{!college ? "Choose a college first" : myCourses.length ? (required ? "Choose your course…" : "Not set") : "No courses added yet"}</option>
           {myCourses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-      <div><label htmlFor={names.semester} className="label">Semester</label>
+      <div><label htmlFor={names.semester} className="label">{termWord}</label>
         <select id={names.semester} name={names.semester} value={semester} required={required} disabled={!course} className="input"
           onChange={(e) => setSemester(e.target.value)}>
-          <option value="">{!course ? "Choose a course first" : mySemesters.length ? (required ? "Choose your semester…" : "Not set") : "No semesters added yet"}</option>
-          {mySemesters.map((s) => <option key={s.id} value={s.id}>Semester {s.semester_number}{s.academic_year ? ` (${s.academic_year})` : ""}</option>)}</select></div>
+          <option value="">{!course ? `Choose a course first` : mySemesters.length ? (required ? `Choose your ${termWord.toLowerCase()}…` : "Not set") : `No ${termWord.toLowerCase()}s added yet`}</option>
+          {mySemesters.map((s) => <option key={s.id} value={s.id}>{termWord} {s.semester_number}{s.academic_year ? ` (${s.academic_year})` : ""}</option>)}</select></div>
     </>
   );
 }
