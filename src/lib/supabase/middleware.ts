@@ -6,7 +6,12 @@ const PRIVATE = ["/dashboard", "/profile", "/settings", "/notifications", "/my-s
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  if (!isConfigured()) return response;
+  const path = request.nextUrl.pathname;
+  const isPrivate = PRIVATE.some((p) => path === p || path.startsWith(p + "/"));
+  if (!isConfigured()) { // no backend yet: private areas bounce to /login (which explains the missing config)
+    if (!isPrivate) return response;
+    const url = request.nextUrl.clone(); url.pathname = "/login"; url.search = ""; return NextResponse.redirect(url);
+  }
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -18,8 +23,7 @@ export async function updateSession(request: NextRequest) {
     },
   });
   const { data: { user } } = await supabase.auth.getUser(); // validates the JWT with Supabase (not just the cookie)
-  const path = request.nextUrl.pathname;
-  if (!user && PRIVATE.some((p) => path === p || path.startsWith(p + "/"))) {
+  if (!user && isPrivate) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(path)}`;

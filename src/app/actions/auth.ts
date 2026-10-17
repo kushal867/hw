@@ -3,13 +3,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
+import { safeNext } from "@/lib/redirect";
 import type { ActionResult } from "@/components/ui/action-form";
 
 const email = z.string().trim().toLowerCase().email("Enter a valid email address.");
 const password = z.string().min(8, "Password must be at least 8 characters.").max(72);
 
-/** Only same-site relative paths are allowed as post-login destinations (prevents open redirects). */
-export const safeNext = (n: unknown) => (typeof n === "string" && /^\/(?!\/)[\w\-./?=&%]*$/.test(n) ? n : "/dashboard");
 
 export async function signUp(fd: FormData): Promise<ActionResult> {
   const p = z.object({ name: z.string().trim().min(2, "Enter your name.").max(60), email, password, agree: z.literal("on", "Please accept the Terms and Privacy Policy.") })

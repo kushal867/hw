@@ -17,3 +17,6 @@ export const BADGES: Record<string, string> = {
   semester_moderator: "Semester Moderator", verified_educator: "Verified Educator",
 };
 export const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+// Academic-integrity guard: graded personal work is never eligible for the public library.
+export const PUBLISHABLE = new Set(["lecture_notes", "previous_papers", "important_questions", "revision_notes", "other"]);

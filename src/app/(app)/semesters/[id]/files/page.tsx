@@ -6,8 +6,8 @@ import { EmptyState, ErrorState, Pagination } from "@/components/ui/misc";
 import { semesterAccess } from "@/lib/semester";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
-import { CATEGORIES, formatBytes, formatDate } from "@/lib/format";
-import { deleteDocument, requestPublication, withdrawPublication, PUBLISHABLE } from "@/app/actions/documents";
+import { CATEGORIES, PUBLISHABLE, formatBytes, formatDate } from "@/lib/format";
+import { deleteDocument, requestPublication, withdrawPublication } from "@/app/actions/documents";
 
 export const metadata = { title: "Shared PDFs" };
 const PAGE = 10;

@@ -5,12 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUser } from "@/lib/auth";
 import { audit } from "@/lib/security";
-import { CATEGORIES } from "@/lib/format";
+import { CATEGORIES, PUBLISHABLE } from "@/lib/format";
 import { isUuid } from "@/lib/semester";
 import type { ActionResult } from "@/components/ui/action-form";
 
-// Academic-integrity guard: graded personal work is never eligible for the public library.
-export const PUBLISHABLE = new Set(["lecture_notes", "previous_papers", "important_questions", "revision_notes", "other"]);
 
 export async function updateDocument(id: string, fd: FormData): Promise<ActionResult> {
   await requireUser();
