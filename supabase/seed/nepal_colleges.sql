@@ -68,3 +68,11 @@ from subj v
 join courses c on c.slug = v.course_slug
 join semesters s on s.course_id = c.id and s.semester_number = v.sem
 on conflict do nothing;
+
+-- 5) Virinchi College (Lalitpur). Not TU-affiliated: per its own site it partners with Asia e University and runs a
+--    Bachelor of ICT (Software Engineering) and an MBA (Entrepreneurship). Location is from a third-party directory (verify).
+--    No semesters/subjects are seeded because the program structure was not confirmed; add them in /admin/colleges.
+insert into colleges (name, city, slug, country) values ('Virinchi College', 'Lalitpur', 'virinchi-college-lalitpur', 'NP') on conflict do nothing;
+insert into courses (college_id, name, slug, degree_level)
+select id, v.name, v.slug, v.level from colleges, (values ('BICT (Software Engineering)', 'bict-software-engineering', 'Bachelor'), ('MBA (Entrepreneurship)', 'mba-entrepreneurship', 'Master')) v(name, slug, level)
+where colleges.slug = 'virinchi-college-lalitpur' on conflict do nothing;

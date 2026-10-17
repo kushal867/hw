@@ -1,5 +1,7 @@
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { PageHeader } from "@/components/ui/misc";
+import { CollegeLogo } from "@/components/college-logo";
+import { CollegeLogoUpload } from "@/components/college-logo-upload";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { addCollege, addCourse, addSemester, addSubject, archiveRecord, assignOwner } from "@/app/actions/admin";
 
@@ -8,7 +10,7 @@ export const metadata = { title: "Colleges & courses" };
 export default async function Colleges() {
   const db = createAdminClient();
   const [{ data: colleges }, { data: courses }, { data: sems }, { data: reqs }] = await Promise.all([
-    db.from("colleges").select("id,name,city,status").order("name"),
+    db.from("colleges").select("id,name,city,status,logo_path").order("name"),
     db.from("courses").select("id,name,status,college_id,colleges(name)").order("name"),
     db.from("semesters").select("id,semester_number,academic_year,status,courses(name,colleges(name)),subjects(id,name,status)").order("semester_number").limit(500),
     db.from("semester_requests").select("id,requester_id,semester_id,note,profiles(display_name),semesters(semester_number,courses(name))").eq("status", "open").limit(50),
@@ -34,8 +36,8 @@ export default async function Colleges() {
           <div className="ml-auto"><ActionForm action={async () => { "use server"; return assignOwner(r.semester_id, r.requester_id); }} confirm="Make this student the owner of the group?"><SubmitButton>Approve as owner</SubmitButton></ActionForm></div></li>))}</ul>}</section>
     <section className="mt-8"><h2 className="mb-3 font-semibold">Existing records</h2>
       <ul className="space-y-3">{(colleges ?? []).map((c) => (
-        <li key={c.id} className="card p-4"><div className="flex items-center gap-2"><span className="font-semibold">{c.name}</span><span className="text-sm text-muted">{c.city}</span><span className="badge">{c.status}</span>
-          <div className="ml-auto"><ActionForm action={async () => { "use server"; return archiveRecord("colleges", c.id, c.status === "active" ? "archived" : "active"); }}><SubmitButton variant="ghost">{c.status === "active" ? "Archive" : "Restore"}</SubmitButton></ActionForm></div></div>
+        <li key={c.id} className="card p-4"><div className="flex items-center gap-2"><CollegeLogo name={c.name} path={c.logo_path} size={40} /><span className="font-semibold">{c.name}</span><span className="text-sm text-muted">{c.city}</span><span className="badge">{c.status}</span>
+          <div className="ml-auto flex gap-2"><CollegeLogoUpload collegeId={c.id} /><ActionForm action={async () => { "use server"; return archiveRecord("colleges", c.id, c.status === "active" ? "archived" : "active"); }}><SubmitButton variant="ghost">{c.status === "active" ? "Archive" : "Restore"}</SubmitButton></ActionForm></div></div>
           <ul className="mt-2 space-y-1 pl-4 text-sm">{(courses ?? []).filter((x) => x.college_id === c.id).map((co) => <li key={co.id}>{co.name} <span className="text-xs text-muted">({(sems ?? []).filter((s: any) => s.courses?.name === co.name && s.courses?.colleges?.name === c.name).length} semesters)</span></li>)}</ul></li>))}</ul></section>
   </>);
 }
