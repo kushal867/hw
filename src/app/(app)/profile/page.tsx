@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
+import { AcademicPicker } from "@/components/academic-picker";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { PageHeader } from "@/components/ui/misc";
@@ -16,7 +17,7 @@ export default async function ProfilePage() {
   const [colleges, courses, semesters, badges, mems, docs, posts, qs] = await Promise.all([
     supabase.from("colleges").select("id,name").order("name"),
     supabase.from("courses").select("id,name,college_id").order("name"),
-    supabase.from("semesters").select("id,semester_number,course_id").order("semester_number"),
+    supabase.from("semesters").select("id,semester_number,academic_year,course_id").order("semester_number"),
     supabase.from("profile_badges").select("badge_type,awarded_at").eq("user_id", profile.id),
     supabase.from("semester_members").select("role,semesters(id,semester_number,courses(name))").eq("user_id", profile.id).eq("membership_status", "active"),
     supabase.from("documents").select("id", { count: "exact", head: true }).eq("uploaded_by", profile.id),
@@ -33,9 +34,8 @@ export default async function ProfilePage() {
             <ActionForm action={updateProfile} className="grid gap-3 sm:grid-cols-2">
               <div><label htmlFor="display_name" className="label">Display name</label><input id="display_name" name="display_name" defaultValue={profile.display_name} required minLength={2} maxLength={60} className="input" /></div>
               <div><label htmlFor="username" className="label">Username (optional)</label><input id="username" name="username" defaultValue={profile.username ?? ""} pattern="[A-Za-z0-9_]{3,30}" className="input" /></div>
-              <div><label htmlFor="college_id" className="label">College</label><select id="college_id" name="college_id" defaultValue={profile.college_id ?? ""} className="input"><option value="">Not set</option>{colleges.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-              <div><label htmlFor="course_id" className="label">Course</label><select id="course_id" name="course_id" defaultValue={profile.course_id ?? ""} className="input"><option value="">Not set</option>{courses.data?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-              <div><label htmlFor="semester_id" className="label">Semester</label><select id="semester_id" name="semester_id" defaultValue={profile.semester_id ?? ""} className="input"><option value="">Not set</option>{semesters.data?.map((s) => <option key={s.id} value={s.id}>Semester {s.semester_number}</option>)}</select></div>
+              <AcademicPicker colleges={colleges.data ?? []} courses={courses.data ?? []} semesters={semesters.data ?? []}
+                initial={{ college: profile.college_id, course: profile.course_id, semester: profile.semester_id }} />
               <div><label htmlFor="preferred_language" className="label">Language</label><select id="preferred_language" name="preferred_language" defaultValue={profile.preferred_language} className="input"><option value="en">English</option><option value="ne">नेपाली</option></select></div>
               <div className="sm:col-span-2"><label htmlFor="bio" className="label">Short bio (optional)</label><textarea id="bio" name="bio" defaultValue={profile.bio ?? ""} maxLength={280} rows={3} className="input" /></div>
               <div className="sm:col-span-2"><SubmitButton>Save changes</SubmitButton></div>

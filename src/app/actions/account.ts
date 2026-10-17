@@ -18,6 +18,18 @@ export async function updateProfile(fd: FormData): Promise<ActionResult> {
   }).safeParse(Object.fromEntries(fd));
   if (!p.success) return { ok: false, message: p.error.issues[0].message };
   const d = p.data;
+  // The pickers are only a convenience: re-check that semester ∈ course ∈ college so a crafted request can't mix colleges.
+  const db = await createClient();
+  if (d.semester_id && !d.course_id) return { ok: false, message: "Choose a course for that semester." };
+  if (d.course_id && !d.college_id) return { ok: false, message: "Choose a college first." };
+  if (d.course_id) {
+    const { data: c } = await db.from("courses").select("college_id").eq("id", d.course_id).maybeSingle();
+    if (!c || c.college_id !== d.college_id) return { ok: false, message: "That course doesn't belong to the selected college." };
+  }
+  if (d.semester_id) {
+    const { data: s } = await db.from("semesters").select("course_id").eq("id", d.semester_id).maybeSingle();
+    if (!s || s.course_id !== d.course_id) return { ok: false, message: "That semester doesn't belong to the selected course." };
+  }
   // Column grants limit this update to profile fields; role/restriction columns are unreachable.
   const { error } = await (await createClient()).from("profiles").update({
     display_name: d.display_name, username: d.username || null, bio: d.bio || null, preferred_language: d.preferred_language,

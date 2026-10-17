@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
+import { AcademicPicker } from "@/components/academic-picker";
 import { JoinByLink } from "@/components/join-by-link";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
@@ -14,8 +15,12 @@ export default async function MySemesters() {
   const supabase = await createClient();
   const { data: mine } = await supabase.from("semester_members")
     .select("role, membership_status, semesters(id, semester_number, academic_year, courses(name, colleges(name)))").eq("user_id", profile.id);
-  const { data: all } = await supabase.from("semesters").select("id, semester_number, academic_year, courses(name, colleges(name))").limit(500);
+  const { data: all } = await supabase.from("semesters").select("id, semester_number, academic_year, courses(id, name, colleges(id, name))").limit(500);
   const options = (all ?? []) as any[];
+  // Linked pickers: derive each level from the semester → course → college chain.
+  const colleges = [...new Map(options.filter((s) => s.courses?.colleges).map((s) => [s.courses.colleges.id, { id: s.courses.colleges.id, name: s.courses.colleges.name }])).values()].sort((a, b) => a.name.localeCompare(b.name));
+  const courses = [...new Map(options.filter((s) => s.courses).map((s) => [s.courses.id, { id: s.courses.id, name: s.courses.name, college_id: s.courses.colleges?.id }])).values()].sort((a, b) => a.name.localeCompare(b.name));
+  const semesterRows = options.map((s) => ({ id: s.id, semester_number: s.semester_number, academic_year: s.academic_year, course_id: s.courses?.id }));
   return (
     <>
       <PageHeader title="My Semesters" sub="Your private classrooms." />
@@ -36,8 +41,7 @@ export default async function MySemesters() {
         <p className="mb-3 text-sm text-muted">No group yet? Ask an administrator to set one up with you as the owner.</p>
         {!options.length ? <p className="text-sm text-muted">No semesters have been added yet.</p> : (
           <ActionForm action={async (fd) => { "use server"; return requestGroup(String(fd.get("semester")), fd); }} className="space-y-3">
-            <label htmlFor="semester" className="label">Semester</label>
-            <select id="semester" name="semester" className="input" required>{options.map((s) => <option key={s.id} value={s.id}>{s.courses?.colleges?.name} — {s.courses?.name}, Semester {s.semester_number}{s.academic_year ? ` (${s.academic_year})` : ""}</option>)}</select>
+            <div className="grid gap-3 sm:grid-cols-3"><AcademicPicker required colleges={colleges} courses={courses} semesters={semesterRows} names={{ college: "req_college", course: "req_course", semester: "semester" }} /></div>
             <label htmlFor="note" className="label">Note (optional)</label>
             <textarea id="note" name="note" maxLength={500} rows={2} className="input" placeholder="E.g. I'm the class representative." />
             <SubmitButton>Send request</SubmitButton>
