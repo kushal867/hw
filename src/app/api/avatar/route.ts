@@ -3,13 +3,9 @@ import { createClient } from "@/lib/server-db";
 import { getSessionUser } from "@/lib/session";
 import { putFile, removeFiles } from "@/lib/storage";
 import { allow } from "@/lib/security";
+import { imageKind } from "@/lib/images";
 
 const MAX = 1024 * 1024;
-const kind = (b: Buffer) =>
-  b.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? "png"
-  : b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff ? "jpg"
-  : b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP" ? "webp" : null;
-
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   const supabase = await createClient();
@@ -18,7 +14,7 @@ export async function POST(req: NextRequest) {
   const file = (await req.formData().catch(() => null))?.get("file");
   if (!(file instanceof File) || file.size === 0 || file.size > MAX) return NextResponse.json({ ok: false, message: "Choose an image up to 1 MB." }, { status: 400 });
   const buf = Buffer.from(await file.arrayBuffer());
-  const ext = kind(buf); // detect by signature, not by filename/MIME
+  const ext = imageKind(buf); // detect by signature, not by filename/MIME
   if (!ext) return NextResponse.json({ ok: false, message: "Use a PNG, JPG or WebP image." }, { status: 415 });
   const path = `${user.id}/${Date.now()}.${ext}`;
   try { await putFile("avatars", path, buf); } catch { return NextResponse.json({ ok: false, message: "Upload failed." }, { status: 500 }); }

@@ -12,7 +12,7 @@ export default async function Colleges({ searchParams }: { searchParams: Promise
   let content;
   if (!isConfigured()) content = <NotConfigured />;
   else {
-    let query = (await createClient()).from("colleges").select("id,name,city,slug").order("name");
+    let query = (await createClient()).from("colleges").select("id,name,city,slug,logo_path").order("name");
     if (q) query = query.ilike("name", `%${q.replace(/[%_\\]/g, "\\$&")}%`);
     const { data, error } = await query.limit(100);
     content = error ? <ErrorState /> : !data?.length ? (
@@ -22,7 +22,10 @@ export default async function Colleges({ searchParams }: { searchParams: Promise
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {data.map((c) => (
           <li key={c.id}><Link href={`/colleges/${c.slug}`} className="card block p-5 transition hover:border-brand-200 hover:shadow-pop">
-            <Building2 className="mb-3 h-5 w-5 text-brand-600" aria-hidden /><h2 className="font-semibold">{c.name}</h2>
+            {c.logo_path
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={`/media/colleges/${c.logo_path}`} alt="" loading="lazy" className="mb-3 h-32 w-full rounded-control object-cover" />
+              : <Building2 className="mb-3 h-5 w-5 text-brand-600" aria-hidden />}<h2 className="font-semibold">{c.name}</h2>
             {c.city && <p className="text-sm text-muted">{c.city}</p>}</Link></li>))}
       </ul>);
   }

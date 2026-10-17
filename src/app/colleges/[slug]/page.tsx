@@ -8,10 +8,13 @@ import { createClient } from "@/lib/server-db";
 export default async function College({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: college } = await supabase.from("colleges").select("id,name,city").eq("slug", slug).maybeSingle();
+  const { data: college } = await supabase.from("colleges").select("id,name,city,logo_path").eq("slug", slug).maybeSingle();
   if (!college) notFound();
   const { data: courses } = await supabase.from("courses").select("id,name,degree_level,semesters(id,semester_number,academic_year)").eq("college_id", college.id).order("name");
   return (<><SiteHeader /><main id="main" className="mx-auto max-w-6xl px-4 py-10">
+    {college.logo_path && (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={`/media/colleges/${college.logo_path}`} alt={`${college.name}`} className="mb-6 h-48 w-full rounded-card object-cover sm:h-64" />)}
     <PageHeader title={college.name} sub={college.city ?? undefined} />
     {!courses?.length ? <EmptyState icon={GraduationCap} title="No courses yet">Courses for this college haven&apos;t been added.</EmptyState> : (
       <div className="space-y-6">{courses.map((c) => (

@@ -6,7 +6,7 @@ import { Readable } from "stream";
 import { env } from "@/lib/env";
 
 /** Local-disk object storage. Buckets are sub-directories; keys are always server-chosen. */
-type Bucket = "documents" | "avatars";
+type Bucket = "documents" | "avatars" | "colleges";
 
 function resolveSafe(bucket: Bucket, key: string) {
   const base = path.resolve(env.storageDir, bucket);
