@@ -43,7 +43,7 @@ await step("A creates a group; B finds it and joins; both land in its chat", asy
   await see(B.page, "You've joined", 8000).catch(() => {}); await B.page.waitForSelector("text=Overview", { timeout: 8000 });
   roomUrl = `${BASE}/groups/${gid}/chat`;
   await A.page.goto(roomUrl); await B.page.goto(roomUrl);
-  await see(A.page, "No messages yet");
+  await see(A.page, "Start the conversation");
 });
 
 await step("a message appears LIVE on the other side, no reload", async () => {

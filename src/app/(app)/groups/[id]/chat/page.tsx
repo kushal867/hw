@@ -14,7 +14,7 @@ export default async function GroupChat({ params }: { params: Promise<{ id: stri
   if (!room) notFound();
   const initial = await listMessages(a.user.id, roomId, { limit: 30 });
   return (
-    <div className="card h-[72dvh] min-h-[460px] overflow-hidden">
+    <div className="card h-[calc(100dvh-23rem)] min-h-[400px] overflow-hidden lg:h-[calc(100dvh-19rem)]">
       <ChatPanel key={roomId} embedded room={room} me={{ id: a.user.id, name: a.profile.display_name, avatar: a.profile.avatar_path }} initial={initial} />
     </div>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Globe, Lock, Plus, Upload, Users } from "lucide-react";
+import { GroupChrome } from "@/components/group-chrome";
 import { GroupTabs } from "@/components/group-tabs";
 import { GroupAvatar, groupGradient } from "@/components/group-avatar";
 import { JoinGroupButton } from "@/components/join-group-button";
@@ -67,7 +68,18 @@ export default async function GroupLayout({ children, params }: { children: Reac
   const [files, posts, qs, members] = await Promise.all([head("documents", (q) => q.neq("moderation_status", "removed")), head("discussion_posts"), head("exam_questions"), head("group_members", (q) => q.eq("membership_status", "active"))]);
   const counts = { files: files.count ?? 0, discussions: posts.count ?? 0, questions: qs.count ?? 0, members: members.count ?? 0 };
 
-  return (<div className="space-y-6">
+  const memberText = plural(counts.members, "member");
+  const compactHeader = (
+    <header className="card flex items-center gap-3 px-3 py-2.5 sm:px-4">
+      <GroupAvatar name={group.name} seed={id} size={40} />
+      <div className="min-w-0 flex-1">
+        <h1 className="truncate text-[17px] font-extrabold leading-tight">{group.name}</h1>
+        <p className="truncate text-xs text-muted">{[where, memberText].filter(Boolean).join(" · ")}</p>
+      </div>
+      <Link href={`/groups/${id}`} className="btn-ghost !min-h-[36px] shrink-0 text-sm">Group page</Link>
+      {a.canModerate && <Link href={`/groups/${id}/settings`} className="btn-secondary !min-h-[36px] hidden shrink-0 text-sm sm:inline-flex"><Plus className="h-4 w-4" aria-hidden />Invite</Link>}
+    </header>);
+  const fullHeader = (
     <header className="card overflow-hidden">
       <Cover id={id} />
       <div className="relative flex flex-wrap items-start gap-x-5 gap-y-2 px-5 pb-5 sm:gap-y-3 sm:px-8 sm:pb-6">
@@ -84,7 +96,9 @@ export default async function GroupLayout({ children, params }: { children: Reac
           {a.canModerate && <Link href={`/groups/${id}/settings`} className="btn-primary"><Plus className="h-4 w-4" aria-hidden />Invite people</Link>}
         </div>
       </div>
-    </header>
+    </header>);
+  return (<div className="space-y-4 sm:space-y-5">
+    <GroupChrome id={id} full={fullHeader} compact={compactHeader} />
     <GroupTabs id={id} canModerate={a.canModerate} hasSubjects={!!group.semester_id} counts={counts} chatRoomId={chatRoom?.id ?? null} />
     <div>{children}</div>
   </div>);

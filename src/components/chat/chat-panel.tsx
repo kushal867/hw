@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AlertCircle, ArrowDown, ArrowLeft, Ban, Bell, BellOff, Check, Clock, CornerUpLeft, Flag, Loader2, MoreHorizontal, Pencil, Send, ShieldOff, SmilePlus, Trash2, Users, X } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowLeft, Ban, Bell, BellOff, Check, Clock, CornerUpLeft, Flag, Loader2, MessageCircle, MoreHorizontal, Pencil, Send, ShieldOff, SmilePlus, Trash2, Users, X } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { GroupAvatar } from "@/components/group-avatar";
 import { MessageText } from "@/components/chat/message-text";
@@ -256,8 +256,19 @@ export function ChatPanel({ room: initialRoom, me, initial, backHref, embedded =
           {loadingOlder && <p className="flex items-center justify-center gap-2 py-2 text-xs text-muted"><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />Loading earlier messages…</p>}
           {!hasMore && msgs.length > 0 && <p className="py-3 text-center text-xs text-muted">This is the beginning of the conversation.</p>}
           {msgs.length === 0 && (
-            <div className="grid h-full place-items-center text-center"><div><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600"><Send className="h-6 w-6" aria-hidden /></span>
-              <p className="mt-3 font-bold">No messages yet</p><p className="mt-1 max-w-xs text-sm text-muted">{room.canSend ? "Say hello and start the conversation." : room.sendBlockedReason}</p></div></div>)}
+            <div className="grid h-full place-items-center px-4 text-center"><div className="max-w-sm">
+              <span className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-gradient-to-br from-brand-500 to-violet-500 text-white shadow-pop"><MessageCircle className="h-7 w-7" aria-hidden /></span>
+              <p className="mt-4 text-lg font-extrabold">{room.kind === "group" ? "Start the conversation" : `Say hi to ${room.title}`}</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted">{room.canSend
+                ? (room.kind === "group" ? "Chat with everyone in this group in real time. Only members can read these messages." : "Messages here are private between the two of you.")
+                : room.sendBlockedReason}</p>
+              {room.canSend && (
+                <div className="mt-5 flex flex-wrap justify-center gap-2" role="group" aria-label="Conversation starters">
+                  {(room.kind === "group" ? ["👋 Hi everyone!", "📚 Is anyone sharing notes?", "❓ I have a question"] : ["👋 Hi!", "📚 Do you have the notes?"]).map((s) => (
+                    <button key={s} type="button" onClick={() => { onType(s); inputRef.current?.focus(); }}
+                      className="rounded-full border border-line bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-card transition hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700">{s}</button>))}
+                </div>)}
+            </div></div>)}
           <ul className="space-y-0.5">
             {msgs.map((m, i) => {
               const prev = msgs[i - 1];
@@ -289,11 +300,11 @@ export function ChatPanel({ room: initialRoom, me, initial, backHref, embedded =
                 <p className="truncate text-slate-600">{(editing ?? replyTo)!.body}</p></div>
               <button onClick={() => { setReplyTo(null); setEditing(null); if (editing) setText(""); }} className="btn-ghost !min-h-[32px] !px-2" aria-label="Cancel"><X className="h-4 w-4" aria-hidden /></button>
             </div>)}
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 rounded-[28px] border border-line bg-slate-50 p-1.5 pl-4 transition focus-within:border-brand-400 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(79,70,229,0.12)]">
             <label htmlFor={`composer-${room.id}`} className="sr-only">Message {room.title}</label>
             <textarea id={`composer-${room.id}`} ref={inputRef} value={text} rows={1} maxLength={MAX_MESSAGE_LENGTH * 2} onChange={(e) => onType(e.target.value)} onKeyDown={onKeyDown}
-              placeholder={editing ? "Edit your message…" : room.kind === "group" ? "Message the group…" : `Message ${room.title}…`} className="input !min-h-[46px] flex-1 resize-none rounded-2xl py-3 leading-snug" />
-            <button onClick={() => void submit()} disabled={!text.trim()} className="btn-primary !min-h-[46px] !w-[46px] shrink-0 rounded-full !px-0" aria-label={editing ? "Save edit" : "Send message"}>{editing ? <Check className="h-5 w-5" aria-hidden /> : <Send className="h-5 w-5" aria-hidden />}</button>
+              placeholder={editing ? "Edit your message…" : room.kind === "group" ? "Message the group…" : `Message ${room.title}…`} className="max-h-36 min-h-[40px] flex-1 resize-none border-0 bg-transparent py-2.5 text-[15px] leading-snug text-ink outline-none placeholder:text-slate-500 focus:ring-0 focus-visible:!outline-none" />
+            <button onClick={() => void submit()} disabled={!text.trim()} className="btn-primary !min-h-[42px] !w-[42px] shrink-0 rounded-full !px-0 disabled:!bg-slate-200 disabled:!text-slate-500 disabled:shadow-none" aria-label={editing ? "Save edit" : "Send message"}>{editing ? <Check className="h-5 w-5" aria-hidden /> : <Send className="h-5 w-5" aria-hidden />}</button>
           </div>
           <div className="mt-1.5 flex items-center justify-between px-1 text-[11px] text-muted"><span className="hidden sm:inline">Enter to send · Shift+Enter for a new line</span>{count > MAX_MESSAGE_LENGTH - 200 && <span className={count > MAX_MESSAGE_LENGTH ? "font-bold text-red-600" : ""}>{count}/{MAX_MESSAGE_LENGTH}</span>}</div>
         </>)}

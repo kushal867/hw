@@ -36,13 +36,16 @@ export function ChatProvider({ userId, initialUnread, children }: { userId: stri
   const [live, setLive] = useState<LiveState>("connecting");
   const handlers = useRef(new Set<Handlers>());
   const active = useRef<string | null>(null);
+  const readAt = useRef<Record<string, number>>({});          // when each room was last marked read here
 
   const refreshUnread = useCallback(async () => {
     try {
       const r = await fetch("/api/chat/unread", { cache: "no-store" });
       if (!r.ok) return;
       const j = await r.json();
-      setUnread(Object.fromEntries((j.rooms as { roomId: string; unread: number; muted: boolean }[]).map((x) => [x.roomId, { n: x.unread, muted: x.muted }])));
+      // A refresh can race with "mark read": a response computed just before the read was recorded must not bring the badge back.
+      const now = Date.now();
+      setUnread(Object.fromEntries((j.rooms as { roomId: string; unread: number; muted: boolean }[]).map((x) => [x.roomId, { n: now - (readAt.current[x.roomId] ?? 0) < 5000 ? 0 : x.unread, muted: x.muted }])));
     } catch { /* offline: keep what we have */ }
   }, []);
 
@@ -100,6 +103,7 @@ export function ChatProvider({ userId, initialUnread, children }: { userId: stri
   const subscribe = useCallback((h: Handlers) => { handlers.current.add(h); return () => { handlers.current.delete(h); }; }, []);
   const setActiveRoom = useCallback((id: string | null) => { active.current = id; }, []);
   const markRead = useCallback((roomId: string, seq: number) => {
+    readAt.current[roomId] = Date.now();
     setUnread((u) => (u[roomId]?.n ? { ...u, [roomId]: { ...u[roomId], n: 0 } } : u));
     void fetch(`/api/chat/rooms/${roomId}/read`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ seq }) }).catch(() => {});
   }, []);
