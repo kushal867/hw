@@ -51,7 +51,6 @@ export function ChatProvider({ userId, initialUnread, children }: { userId: stri
     let timer: ReturnType<typeof setTimeout> | null = null;
     let backoff = 1000;
     let stopped = false;
-    let everReady = false;
 
     const resync = () => { void refreshUnread(); handlers.current.forEach((h) => h.onResync?.()); };
 
@@ -59,7 +58,9 @@ export function ChatProvider({ userId, initialUnread, children }: { userId: stri
       if (stopped) return;
       setLive("connecting");
       es = new EventSource("/api/chat/stream");
-      es.addEventListener("ready", () => { setLive("live"); backoff = 1000; if (everReady) resync(); everReady = true; });
+      // Catch up on EVERY (re)connect, including the first: anything sent between the page render and the stream becoming ready
+      // (a few hundred ms on a normal connection, more on a slow one) would otherwise be missed until the next event.
+      es.addEventListener("ready", () => { setLive("live"); backoff = 1000; resync(); });
       es.addEventListener("room", (ev) => {
         const e = JSON.parse((ev as MessageEvent).data) as RoomEvent;
         if (e.t === "msg" && e.sender !== userId) {

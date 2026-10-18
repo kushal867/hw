@@ -1,0 +1,21 @@
+# systemd template: one Next.js instance per port, e.g. edusathi@3040 and edusathi@3041.
+[Unit]
+Description=EduSathi (Next.js) on port %i
+After=network.target postgresql.service
+
+[Service]
+User=edusathi
+Group=edusathi
+WorkingDirectory=/opt/edusathi/current
+EnvironmentFile=/opt/edusathi/env
+Environment=PORT=%i
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+MemoryMax=400M
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/opt/edusathi/storage
+
+[Install]
+WantedBy=multi-user.target
