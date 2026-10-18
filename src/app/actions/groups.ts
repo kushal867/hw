@@ -2,8 +2,9 @@
 import { revalidatePath } from "next/cache";
 import QRCode from "qrcode";
 import { z } from "zod";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/db";
+import { removeFiles } from "@/lib/storage";
+import { createClient } from "@/lib/server-db";
 import { requireUser } from "@/lib/auth";
 import { allow, audit, hashToken, newInviteToken } from "@/lib/security";
 import { authorize, isUuid, notify } from "@/lib/group";
@@ -54,7 +55,7 @@ export async function deleteGroup(groupId: string, fd: FormData): Promise<Action
   const { data: g } = await db.from("groups").select("name").eq("id", groupId).maybeSingle();
   if (!g || String(fd.get("confirm") ?? "").trim() !== g.name) return { ok: false, message: "Type the group name exactly to confirm." };
   const { data: files } = await db.from("documents").select("storage_path").eq("group_id", groupId);
-  if (files?.length) await db.storage.from("documents").remove(files.map((f) => f.storage_path));
+  if (files?.length) await removeFiles("documents", files.map((f: { storage_path: string }) => f.storage_path));
   const { error } = await db.from("groups").delete().eq("id", groupId);
   if (error) return { ok: false, message: "Could not delete the group." };
   await audit(auth.userId, "group.delete", "group", groupId, { name: g.name });

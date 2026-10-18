@@ -4,7 +4,8 @@ import { GroupTabs } from "@/components/group-tabs";
 import { JoinGroupButton } from "@/components/join-group-button";
 import { PageHeader } from "@/components/ui/misc";
 import { groupAccess, loadGroup, isUuid } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { termName } from "@/lib/format";
+import { createClient } from "@/lib/server-db";
 import { notFound } from "next/navigation";
 
 const POLICY = { open: "Anyone can join", approval: "Join requests are approved by moderators", invite_only: "Invitation only" } as const;
@@ -34,7 +35,7 @@ export default async function GroupLayout({ children, params }: { children: Reac
       <div className="card mx-auto mt-6 max-w-xl p-6">
         <span className="badge"><Globe className="mr-1 h-3 w-3" aria-hidden />Public group</span>
         <h1 className="mt-3 text-2xl font-bold">{group.name}</h1>
-        {group.semesters && <p className="text-sm text-muted">{group.semesters.courses.colleges.name} · {group.semesters.courses.name} · Semester {group.semesters.semester_number}</p>}
+        {group.semesters && <p className="text-sm text-muted">{group.semesters.courses.colleges.name} · {group.semesters.courses.name} · {termName(group.semesters.courses.term_label, group.semesters.semester_number)}</p>}
         {group.description && <p className="mt-3 whitespace-pre-line">{group.description}</p>}
         <p className="mt-3 flex items-center gap-2 text-sm text-muted"><Users className="h-4 w-4" aria-hidden />{dir?.member_count ?? 0} members · {POLICY[group.join_policy]}</p>
         <div className="mt-5">
@@ -48,7 +49,7 @@ export default async function GroupLayout({ children, params }: { children: Reac
   }
 
   return (<>
-    <PageHeader title={group.name} sub={group.semesters ? `${group.semesters.courses.colleges.name} · ${group.semesters.courses.name} · Semester ${group.semesters.semester_number}` : group.description ?? undefined}>
+    <PageHeader title={group.name} sub={group.semesters ? `${group.semesters.courses.colleges.name} · ${group.semesters.courses.name} · ${termName(group.semesters.courses.term_label, group.semesters.semester_number)}` : group.description ?? undefined}>
       <span className="badge">{group.visibility === "public" ? <Globe className="mr-1 h-3 w-3" aria-hidden /> : <Lock className="mr-1 h-3 w-3" aria-hidden />}{group.visibility}</span>
     </PageHeader>
     <GroupTabs id={id} canModerate={a.canModerate} hasSubjects={!!group.semester_id} />

@@ -5,6 +5,7 @@
 
 begin;  -- all-or-nothing: a failure leaves the database exactly as it was
 
+-- (Runs after 0006: public_notes is rebuilt below on top of groups and keeps the term_label column.)
 -- ───────── 1) groups table ─────────
 create table public.groups (
   id uuid primary key default gen_random_uuid(),
@@ -244,7 +245,8 @@ select d.id, d.title, d.description, d.tags, d.category, d.size_bytes, d.publish
        sem.id as semester_id, sem.semester_number,
        c.id as course_id, c.name as course_name, c.slug as course_slug,
        col.id as college_id, col.name as college_name, col.slug as college_slug,
-       p.display_name as uploader_name
+       p.display_name as uploader_name,
+       c.term_label as term_label
 from documents d
 join groups g on g.id = d.group_id
 left join semesters sem on sem.id = g.semester_id
@@ -258,7 +260,7 @@ grant select on public.public_notes to anon, authenticated;
 -- Group directory: discoverable public groups (name, description, linked college/semester, member count). No content.
 create view public.group_directory as
 select g.id, g.name, g.description, g.join_policy, g.created_at,
-       g.semester_id, sem.semester_number, c.name as course_name, col.id as college_id, col.name as college_name, col.slug as college_slug,
+       g.semester_id, sem.semester_number, c.term_label, c.name as course_name, col.id as college_id, col.name as college_name, col.slug as college_slug,
        (select count(*) from group_members m where m.group_id = g.id and m.membership_status = 'active') as member_count
 from groups g
 left join semesters sem on sem.id = g.semester_id

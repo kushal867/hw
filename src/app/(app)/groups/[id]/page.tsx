@@ -2,7 +2,7 @@ import { BookMarked, FileText, MessagesSquare, Users } from "lucide-react";
 import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { groupAccess, loadGroup } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { leaveGroup } from "@/app/actions/groups";
 
 export default async function Overview({ params }: { params: Promise<{ id: string }> }) {

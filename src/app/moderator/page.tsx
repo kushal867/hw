@@ -3,8 +3,8 @@ import { ShieldCheck } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/server-db";
+import { createAdminClient } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { moderate } from "@/app/actions/community";
 

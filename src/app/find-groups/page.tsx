@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Search, Users } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { EmptyState, ErrorState, NotConfigured, PageHeader, Pagination } from "@/components/ui/misc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { isConfigured } from "@/lib/env";
+import { termName } from "@/lib/format";
 
 export const metadata = { title: "Find groups" };
 const PAGE = 12;
@@ -29,7 +30,7 @@ export default async function FindGroups({ searchParams }: { searchParams: Promi
       <form role="search" className="card mb-6 grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative lg:col-span-2"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" aria-hidden /><label htmlFor="q" className="sr-only">Search groups</label><input id="q" name="q" defaultValue={sp.q} placeholder="Search groups" className="input pl-9" /></div>
         <div><label htmlFor="college" className="sr-only">College</label><select id="college" name="college" defaultValue={sp.college ?? ""} className="input"><option value="">All colleges</option>{colleges?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-        <div className="flex gap-2"><label htmlFor="semester" className="sr-only">Semester</label><select id="semester" name="semester" defaultValue={sp.semester ?? ""} className="input"><option value="">Any semester</option>{Array.from({ length: 8 }, (_, i) => <option key={i} value={i + 1}>Semester {i + 1}</option>)}</select><button className="btn-primary">Search</button></div>
+        <div className="flex gap-2"><label htmlFor="semester" className="sr-only">Semester</label><select id="semester" name="semester" defaultValue={sp.semester ?? ""} className="input"><option value="">Any term</option>{Array.from({ length: 8 }, (_, i) => <option key={i} value={i + 1}>Term {i + 1}</option>)}</select><button className="btn-primary">Search</button></div>
       </form>
       {error ? <ErrorState /> : !rows.length ? (
         <EmptyState icon={Users} title="No groups found" action={<Link href="/groups/new" className="btn-primary">Create the first one</Link>}>Try a different search, or start a group for your class.</EmptyState>
@@ -37,7 +38,7 @@ export default async function FindGroups({ searchParams }: { searchParams: Promi
         <ul className="grid gap-4 md:grid-cols-2">{rows.map((g) => (
           <li key={g.id}><Link href={`/groups/${g.id}`} className="card block h-full p-5 transition hover:border-brand-200 hover:shadow-pop">
             <h2 className="font-semibold">{g.name}</h2>
-            {g.college_name && <p className="text-sm text-muted">{g.college_name} · {g.course_name} · Semester {g.semester_number}</p>}
+            {g.college_name && <p className="text-sm text-muted">{g.college_name} · {g.course_name} · {termName(g.term_label, g.semester_number)}</p>}
             {g.description && <p className="mt-2 line-clamp-2 text-sm">{g.description}</p>}
             <p className="mt-3 flex items-center gap-3 text-xs text-muted"><span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden />{g.member_count} members</span><span className="badge">{POLICY[g.join_policy as keyof typeof POLICY]}</span></p>
           </Link></li>))}</ul>

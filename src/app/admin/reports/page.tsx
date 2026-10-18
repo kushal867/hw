@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Flag } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { resolveReport } from "@/app/actions/admin";
 

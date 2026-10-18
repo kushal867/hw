@@ -1,9 +1,9 @@
 import "server-only";
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { requireUser, getMembership } from "@/lib/auth";
 import type { ActionResult } from "@/components/ui/action-form";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 export const isUuid = (s: string) => UUID.test(s);
@@ -11,14 +11,14 @@ export const isUuid = (s: string) => UUID.test(s);
 export type GroupRow = {
   id: string; name: string; description: string | null; visibility: "public" | "private";
   join_policy: "open" | "approval" | "invite_only"; status: "active" | "archived"; created_by: string | null; semester_id: string | null;
-  semesters: { id: string; semester_number: number; academic_year: string | null; courses: { id: string; name: string; colleges: { id: string; name: string; slug: string } } } | null;
+  semesters: { id: string; semester_number: number; academic_year: string | null; courses: { id: string; name: string; term_label: string; colleges: { id: string; name: string; slug: string } } } | null;
 };
 
 /** Returns the group only if RLS lets this user see it (public groups, or groups they belong to). Null otherwise. */
 export const loadGroup = cache(async (id: string): Promise<GroupRow | null> => {
   if (!isUuid(id)) return null;
   const { data } = await (await createClient()).from("groups")
-    .select("id,name,description,visibility,join_policy,status,created_by,semester_id,semesters(id,semester_number,academic_year,courses(id,name,colleges(id,name,slug)))")
+    .select("id,name,description,visibility,join_policy,status,created_by,semester_id,semesters(id,semester_number,academic_year,courses(id,name,term_label,colleges(id,name,slug)))")
     .eq("id", id).maybeSingle();
   return (data as unknown as GroupRow) ?? null;
 });

@@ -4,7 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { UploadForm } from "@/components/upload-form";
 import { EmptyState, ErrorState, Pagination } from "@/components/ui/misc";
 import { groupAccess, loadGroup } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { env } from "@/lib/env";
 import { CATEGORIES, PUBLISHABLE, formatBytes, formatDate } from "@/lib/format";
 import { deleteDocument, requestPublication, withdrawPublication } from "@/app/actions/documents";

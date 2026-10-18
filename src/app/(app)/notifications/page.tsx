@@ -4,7 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { LiveRefresh } from "@/components/live-refresh";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { formatDate } from "@/lib/format";
 import { markRead } from "@/app/actions/account";
 

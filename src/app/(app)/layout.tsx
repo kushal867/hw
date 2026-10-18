@@ -3,7 +3,7 @@ import { LogOut } from "lucide-react";
 import { BottomNav, SideNav } from "@/components/app-nav";
 import { Logo } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { logOut } from "@/app/actions/auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

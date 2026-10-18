@@ -4,7 +4,7 @@ import { EyeOff, Flag, Trash2 } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { LiveRefresh } from "@/components/live-refresh";
 import { isUuid, groupAccess } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { POST_TYPES, formatDate } from "@/lib/format";
 import { createComment, deleteComment, deletePost, moderate } from "@/app/actions/community";
 

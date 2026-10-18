@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/server-db";
+import { getSessionUser } from "@/lib/session";
+import { putFile, removeFiles } from "@/lib/storage";
+import { createAdminClient } from "@/lib/db";
 import { env } from "@/lib/env";
 import { CATEGORIES } from "@/lib/format";
 import { allow, audit, looksLikePdf, sha256 } from "@/lib/security";
@@ -20,8 +22,8 @@ const Meta = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const user = await getSessionUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return fail("Please log in.", 401);
 
   const declared = Number(req.headers.get("content-length") ?? 0);
@@ -59,14 +61,13 @@ export async function POST(req: NextRequest) {
   if (tags.some((t) => t.length > 30)) return fail("Tags must be 30 characters or fewer.");
 
   const path = `${m.groupId}/${randomUUID()}.pdf`; // server-chosen path; never derived from the client filename
-  const up = await admin.storage.from("documents").upload(path, buf, { contentType: "application/pdf", upsert: false });
-  if (up.error) return fail("Upload failed. Please try again.", 500);
+  try { await putFile("documents", path, buf); } catch { return fail("Upload failed. Please try again.", 500); }
 
   const { data: doc, error } = await admin.from("documents").insert({
     uploaded_by: user.id, group_id: m.groupId, subject_id: m.subjectId || null, title: m.title, description: m.description || null,
     tags, category: m.category, storage_path: path, size_bytes: buf.length, mime_type: "application/pdf", sha256: hash,
   }).select("id").single();
-  if (error) { await admin.storage.from("documents").remove([path]); return fail("Could not save the document.", 500); } // no orphaned files
+  if (error) { await removeFiles("documents", [path]); return fail("Could not save the document.", 500); } // no orphaned files
   await audit(user.id, "document.upload", "document", doc.id, { group: m.groupId, size: buf.length });
   return NextResponse.json({ ok: true, id: doc.id });
 }

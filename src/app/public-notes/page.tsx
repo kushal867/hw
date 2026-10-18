@@ -2,9 +2,9 @@ import Link from "next/link";
 import { FileText, Search } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { EmptyState, ErrorState, NotConfigured, PageHeader, Pagination } from "@/components/ui/misc";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { isConfigured } from "@/lib/env";
-import { CATEGORIES, formatBytes, formatDate } from "@/lib/format";
+import { CATEGORIES, formatBytes, formatDate, termName } from "@/lib/format";
 
 export const metadata = { title: "Public Notes" };
 const PAGE = 12;
@@ -46,7 +46,7 @@ export default async function PublicNotes({ searchParams }: { searchParams: Prom
             <li key={n.id}><Link href={`/public-notes/${n.id}`} className="card block h-full p-5 transition hover:border-brand-200 hover:shadow-pop">
               <span className="badge">{CATEGORIES[n.category]}</span>
               <h2 className="mt-2 font-semibold">{n.title}</h2>
-              <p className="mt-1 text-sm text-muted">{[n.college_name, n.course_name, n.semester_number ? `Semester ${n.semester_number}` : null, n.subject_name].filter(Boolean).join(" · ")}</p>
+              <p className="mt-1 text-sm text-muted">{[n.college_name, n.course_name, (n.semester_number ? termName(n.term_label, n.semester_number) : null), n.subject_name].filter(Boolean).join(" · ")}</p>
               <p className="mt-3 text-xs text-muted">By {n.uploader_name} · {formatBytes(n.size_bytes)} · {formatDate(n.published_at)}</p>
             </Link></li>))}
         </ul>

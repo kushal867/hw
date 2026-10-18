@@ -1,6 +1,6 @@
--- Seed: TU-affiliated colleges and programs, compiled from public third-party listings (edusanjal, collegeinfonepal,
--- college/TU campus pages) on 2026-10. Listings are NOT an official TU list: verify each college/program before launch.
--- Idempotent: safe to re-run. Run as the database owner/admin (RLS blocks other roles from writing).
+-- Seed: Nepali colleges, programs, semesters and starter subjects. Idempotent: safe to re-run.
+-- Run as the database owner (psql as postgres): RLS blocks other roles from writing these tables.
+-- Subject lists were summarised from public campus pages and must be verified against the official TU syllabus.
 
 -- 1) Colleges (slug = lowercase name + city, same rule the admin UI uses)
 insert into colleges (name, city, slug, country) values
@@ -18,7 +18,7 @@ insert into colleges (name, city, slug, country) values
   ('College of Applied Business and Technology', 'Kathmandu', 'college-of-applied-business-and-technology-kathmandu', 'NP')
 on conflict do nothing;
 
--- 2) Courses offered per college (as listed by the sources above)
+-- 2) Courses offered per college
 with offer(college_slug, course, slug) as (values
   ('amrit-science-campus-kathmandu', 'BIT', 'bit'),
   ('patan-multiple-campus-lalitpur', 'BIT', 'bit'),
@@ -41,15 +41,14 @@ insert into courses (college_id, name, slug, degree_level)
 select c.id, o.course, o.slug, 'Bachelor' from offer o join colleges c on c.slug = o.college_slug
 on conflict do nothing;
 
--- 3) Semesters 1-8 for the 8-semester programs (BIT, BCA, BIM, BBA).
---    BBS (TU) runs in yearly terms, so no semesters are created for it; decide how to model it before adding.
+-- 3) Terms: BIT/BCA/BIM/BBA have 8 semesters; BBS (TU) runs in 4 yearly terms, labelled "Year" (courses.term_label, migration 0006).
+update courses set term_label = 'Year' where slug = 'bbs';
 insert into semesters (course_id, semester_number)
-select c.id, n from courses c cross join generate_series(1, 8) n
-where c.slug in ('bit', 'bca', 'bim', 'bba')
+select c.id, n from courses c cross join generate_series(1, case when c.slug = 'bbs' then 4 else 8 end) n
+where c.slug in ('bit', 'bca', 'bim', 'bba', 'bbs')
   and not exists (select 1 from semesters s where s.course_id = c.id and s.semester_number = n);
 
--- 4) Subjects: only what the sources state. Same TU syllabus applies at every college offering the program.
---    BIT sem 1-4 (course titles summarised from a TU campus page; verify against TU IoST). Codes omitted where not confirmed.
+-- 4) Starter subjects (same TU syllabus at every college offering the program)
 with subj(course_slug, sem, name, code) as (values
   ('bit', 1, 'IT Fundamentals', null), ('bit', 1, 'C Programming', null), ('bit', 1, 'Digital Logic', null),
   ('bit', 1, 'Mathematics I', null), ('bit', 1, 'Technical English', null),
@@ -59,7 +58,6 @@ with subj(course_slug, sem, name, code) as (values
   ('bit', 3, 'Numerical Methods', null), ('bit', 3, 'Principles of Management', null),
   ('bit', 4, 'Web Technology', null), ('bit', 4, 'Microprocessors and Interfacing', null), ('bit', 4, 'Software Engineering', null),
   ('bit', 4, 'Computer Networks', null), ('bit', 4, 'Data Communication', null),
-  -- BCA sem 1 (Prime College course cycle, 16 credits)
   ('bca', 1, 'Computer Fundamentals and Applications', 'CACS101'), ('bca', 1, 'Society and Technology', null),
   ('bca', 1, 'English I', null), ('bca', 1, 'Mathematics I', null), ('bca', 1, 'Digital Logic', 'CACS105'))
 insert into subjects (semester_id, name, code)
@@ -69,10 +67,15 @@ join courses c on c.slug = v.course_slug
 join semesters s on s.course_id = c.id and s.semester_number = v.sem
 on conflict do nothing;
 
--- 5) Virinchi College (Lalitpur). Not TU-affiliated: per its own site it partners with Asia e University and runs a
---    Bachelor of ICT (Software Engineering) and an MBA (Entrepreneurship). Location is from a third-party directory (verify).
---    No semesters/subjects are seeded because the program structure was not confirmed; add them in /admin/colleges.
+-- 5) Virinchi College (Lalitpur): not TU-affiliated. Semesters assume the usual structure (BICT 8, MBA 4); adjust in /admin/colleges if it differs. No subjects seeded.
 insert into colleges (name, city, slug, country) values ('Virinchi College', 'Lalitpur', 'virinchi-college-lalitpur', 'NP') on conflict do nothing;
 insert into courses (college_id, name, slug, degree_level)
 select id, v.name, v.slug, v.level from colleges, (values ('BICT (Software Engineering)', 'bict-software-engineering', 'Bachelor'), ('MBA (Entrepreneurship)', 'mba-entrepreneurship', 'Master')) v(name, slug, level)
 where colleges.slug = 'virinchi-college-lalitpur' on conflict do nothing;
+
+-- Semesters for Virinchi's programs
+insert into semesters (course_id, semester_number)
+select c.id, n from courses c join colleges o on o.id = c.college_id
+cross join generate_series(1, case when c.slug = 'mba-entrepreneurship' then 4 else 8 end) n
+where o.slug = 'virinchi-college-lalitpur'
+  and not exists (select 1 from semesters s where s.course_id = c.id and s.semester_number = n);

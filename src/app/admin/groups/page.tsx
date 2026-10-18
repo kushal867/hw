@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { setGroupStatus } from "@/app/actions/admin";
 import { Users } from "lucide-react";
@@ -10,7 +10,7 @@ export const metadata = { title: "Groups" };
 
 export default async function AdminGroups({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
-  let query = createAdminClient().from("groups").select("id,name,visibility,join_policy,status,created_at,profiles:created_by(display_name),group_members(count)").order("created_at", { ascending: false }).limit(50);
+  let query = createAdminClient().from("groups").select("id,name,visibility,join_policy,status,created_at,profiles!groups_created_by_fkey(display_name),group_members(count)").order("created_at", { ascending: false }).limit(50);
   if (q) query = query.ilike("name", `%${q.replace(/[%_\\]/g, "\\$&")}%`);
   const { data } = await query;
   return (<>

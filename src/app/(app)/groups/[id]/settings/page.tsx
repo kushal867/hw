@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { InviteManager } from "@/components/invite-manager";
 import { groupAccess, loadGroup } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { formatDate } from "@/lib/format";
 import { deleteGroup, revokeInvite, updateGroup } from "@/app/actions/groups";
 

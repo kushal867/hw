@@ -1,20 +1,20 @@
+import { AcademicPicker } from "@/components/academic-picker";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { createGroup } from "@/app/actions/groups";
 
 export const metadata = { title: "Create group" };
 
 export default async function NewGroup() {
   await requireUser();
-  const { data } = await (await createClient()).from("semesters").select("id, semester_number, academic_year, courses(name, colleges(name))").limit(1000);
-  // Group the optional "link to a semester" choices by college so the list stays easy to scan.
-  const byCollege = new Map<string, { id: string; label: string }[]>();
-  ((data ?? []) as any[]).forEach((s) => {
-    const col = s.courses?.colleges?.name ?? "Other";
-    byCollege.set(col, [...(byCollege.get(col) ?? []), { id: s.id, label: `${s.courses?.name} · Semester ${s.semester_number}${s.academic_year ? ` (${s.academic_year})` : ""}` }]);
-  });
+  const supabase = await createClient();
+  const [colleges, courses, semesters] = await Promise.all([
+    supabase.from("colleges").select("id,name").order("name"),
+    supabase.from("courses").select("id,name,college_id,term_label").order("name"),
+    supabase.from("semesters").select("id,semester_number,academic_year,course_id").order("semester_number"),
+  ]);
   return (
     <>
       <PageHeader title="Create a group" sub="Any student can start a group — for a class, homework sharing, or a study circle." />
@@ -27,10 +27,10 @@ export default async function NewGroup() {
         <div><label htmlFor="join_policy" className="label">How do people join a public group?</label>
           <select id="join_policy" name="join_policy" defaultValue="approval" className="input"><option value="approval">They request, and I approve</option><option value="open">Anyone can join instantly</option></select>
           <p className="mt-1 text-xs text-muted">Ignored for private groups (invitation only).</p></div>
-        <div><label htmlFor="semester" className="label">Link to a college semester (optional)</label>
-          <select id="semester" name="semester" defaultValue="" className="input"><option value="">Not linked to a college</option>
-            {[...byCollege.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([col, items]) => <optgroup key={col} label={col}>{items.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}</optgroup>)}</select>
-          <p className="mt-1 text-xs text-muted">Linking lets classmates find you by college and lets you tag files with that semester&apos;s subjects.</p></div>
+        <fieldset><legend className="label">Link to a college (optional)</legend>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <AcademicPicker colleges={colleges.data ?? []} courses={courses.data ?? []} semesters={semesters.data ?? []} names={{ college: "link_college", course: "link_course", semester: "semester" }} /></div>
+          <p className="mt-1 text-xs text-muted">Linking lets classmates find you by college and lets you tag files with that term&apos;s subjects.</p></fieldset>
         <SubmitButton>Create group</SubmitButton>
       </ActionForm>
     </>);

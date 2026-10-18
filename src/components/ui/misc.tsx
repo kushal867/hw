@@ -28,7 +28,7 @@ export const ErrorState = ({ message = "We couldn't load this. Please try again.
 
 export const NotConfigured = () => (
   <div role="status" className="card border-warn/40 bg-warn/5 p-4 text-sm">
-    <strong>Supabase is not configured.</strong> Copy <code>.env.example</code> to <code>.env.local</code> and set the Supabase URL and keys — see README.
+    <strong>The database is not configured.</strong> Copy <code>.env.example</code> to <code>.env.local</code> and set <code>DATABASE_URL</code> — see README.
   </div>
 );
 

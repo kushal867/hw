@@ -1,9 +1,10 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { adminSql, createAdminClient } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { audit } from "@/lib/security";
+import { removeFiles } from "@/lib/storage";
 import { isUuid, notify } from "@/lib/group";
 import { slugify } from "@/lib/format";
 import type { ActionResult } from "@/components/ui/action-form";
@@ -18,7 +19,7 @@ export async function reviewDocument(id: string, approve: boolean): Promise<Acti
   if (!doc || doc.moderation_status !== "pending") return { ok: false, message: "This document isn't awaiting review." };
   await db.from("documents").update(approve ? { visibility: "public", moderation_status: "approved", published_at: new Date().toISOString() } : { moderation_status: "rejected" }).eq("id", id);
   await audit(user.id, approve ? "document.approve" : "document.reject", "document", id);
-  await notify(doc.uploaded_by, "publication", approve ? "Your PDF is now public" : "Your PDF was not approved for public sharing", approve ? `/public-notes/${id}` : "/my-groups", doc.title);
+  await notify(doc.uploaded_by, "publication", approve ? "Your PDF is now public" : "Your PDF was not approved for public sharing", approve ? `/public-notes/${id}` : "/my-semesters", doc.title);
   revalidatePath("/admin/content");
   return { ok: true, message: approve ? "Approved and published." : "Rejected." };
 }
@@ -64,8 +65,14 @@ export async function completeDeletion(requestId: string): Promise<ActionResult>
   const { data: r } = await db.from("deletion_requests").select("user_id,status").eq("id", requestId).maybeSingle();
   if (!r || r.status !== "open") return { ok: false, message: "Request not open." };
   const { data: files } = await db.from("documents").select("storage_path").eq("uploaded_by", r.user_id);
-  if (files?.length) await db.storage.from("documents").remove(files.map((f) => f.storage_path));
-  const { error } = await db.auth.admin.deleteUser(r.user_id);   // cascades profile, posts, documents rows
+  const { data: prof } = await db.from("profiles").select("avatar_path").eq("id", r.user_id).maybeSingle();
+  let error: { message: string } | null = null;
+  try { await adminSql("delete from auth.users where id = $1", [r.user_id]); }   // cascades profile, posts, documents rows
+  catch (e: any) { error = { message: String(e?.message ?? "") }; }
+  if (!error) {
+    if (files?.length) await removeFiles("documents", files.map((f: { storage_path: string }) => f.storage_path));
+    if (prof?.avatar_path) await removeFiles("avatars", [prof.avatar_path]);
+  }
   if (error) return { ok: false, message: error.message.includes("owner") ? "User owns a semester: transfer ownership first." : "Deletion failed." };
   await audit(user.id, "user.delete", "user", r.user_id, { request: requestId });
   revalidatePath("/admin/users");
@@ -87,9 +94,9 @@ export async function addCollege(fd: FormData): Promise<ActionResult> {
 }
 export async function addCourse(fd: FormData): Promise<ActionResult> {
   await requireAdmin();
-  const p = z.object({ college: z.string().refine(isUuid, "Choose a college."), name: z.string().trim().min(2).max(120), level: z.string().trim().max(40) }).safeParse(Object.fromEntries(fd));
+  const p = z.object({ college: z.string().refine(isUuid, "Choose a college."), name: z.string().trim().min(2).max(120), level: z.string().trim().max(40), term: z.enum(["Semester", "Year"]).default("Semester") }).safeParse(Object.fromEntries(fd));
   if (!p.success) return { ok: false, message: p.error.issues[0].message };
-  const { error } = await createAdminClient().from("courses").insert({ college_id: p.data.college, name: p.data.name, slug: slugify(p.data.name), degree_level: p.data.level || null });
+  const { error } = await createAdminClient().from("courses").insert({ college_id: p.data.college, name: p.data.name, slug: slugify(p.data.name), degree_level: p.data.level || null, term_label: p.data.term });
   if (error) return { ok: false, message: dup(error) };
   revalidatePath("/admin/colleges");
   return { ok: true, message: "Course added." };

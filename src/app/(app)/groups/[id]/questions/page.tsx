@@ -3,7 +3,7 @@ import { Bookmark, BookmarkCheck, BookMarked, FileDown, Trash2, BadgeCheck } fro
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { EmptyState, Pagination } from "@/components/ui/misc";
 import { groupAccess, loadGroup } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/server-db";
 import { QUESTION_TYPES } from "@/lib/format";
 import { addQuestion, confirmQuestion, deleteQuestion, toggleSaved } from "@/app/actions/community";
 

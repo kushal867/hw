@@ -1,10 +1,11 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/server-db";
+import { createAdminClient } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { audit } from "@/lib/security";
+import { removeFiles } from "@/lib/storage";
 import { CATEGORIES, PUBLISHABLE } from "@/lib/format";
 import { isUuid } from "@/lib/group";
 import type { ActionResult } from "@/components/ui/action-form";
@@ -32,7 +33,7 @@ export async function deleteDocument(id: string): Promise<ActionResult> {
   if (!doc) return { ok: false, message: "Document not found." };
   const { data, error } = await supabase.from("documents").delete().eq("id", id).select("id"); // RLS: uploader, group moderator or admin
   if (error || !data?.length) return { ok: false, message: "You can't delete this document." };
-  await createAdminClient().storage.from("documents").remove([doc.storage_path]);
+  await removeFiles("documents", [doc.storage_path]);
   await audit(user.id, "document.delete", "document", id);
   revalidatePath(`/groups/${doc.group_id}/files`);
   return { ok: true, message: "Document deleted." };

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Check, Circle, FileDown, MessagesSquare, QrCode, Upload, FileText } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
 import { requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { formatDate } from "@/lib/format";
+import { createClient } from "@/lib/server-db";
+import { formatDate, termName } from "@/lib/format";
 
 export const metadata = { title: "Dashboard" };
 
@@ -11,7 +11,7 @@ export default async function Dashboard() {
   const { profile } = await requireUser();
   const supabase = await createClient();
   const { data: memberships } = await supabase.from("group_members")
-    .select("role, groups(id, name, status, semesters(semester_number, courses(name, colleges(name))))").eq("user_id", profile.id).eq("membership_status", "active");
+    .select("role, groups(id, name, status, semesters(semester_number, courses(name, term_label, colleges(name))))").eq("user_id", profile.id).eq("membership_status", "active");
   const active = ((memberships ?? []) as any[]).filter((m) => m.groups?.status === "active");
   const semIds = active.map((m) => m.groups.id);
   // RLS already limits these to the user's semesters; the in() filter just scopes the dashboard.
@@ -51,7 +51,7 @@ export default async function Dashboard() {
           Start a group for your class or homework, join one with an invitation link or QR code, or search public groups.</EmptyState> : (
           <ul className="grid gap-4 sm:grid-cols-2">{active.map((m: any) => (
             <li key={m.groups.id}><Link href={`/groups/${m.groups.id}`} className="card block p-5 hover:border-brand-200">
-              {m.groups.semesters && <p className="text-xs text-muted">{m.groups.semesters.courses?.colleges?.name} · {m.groups.semesters.courses?.name} · Semester {m.groups.semesters.semester_number}</p>}
+              {m.groups.semesters && <p className="text-xs text-muted">{m.groups.semesters.courses?.colleges?.name} · {m.groups.semesters.courses?.name} · {termName(m.groups.semesters.courses?.term_label, m.groups.semesters.semester_number)}</p>}
               <p className="font-semibold">{m.groups.name}</p>
               <span className="badge mt-2 capitalize">{m.role}</span></Link></li>))}</ul>)}
       </section>
