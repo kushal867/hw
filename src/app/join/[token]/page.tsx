@@ -10,7 +10,7 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
   const { token } = await params;
   const me = await getCurrentUser();
   return (
-    <AuthShell title="You've been invited" sub="Join your classmates' private semester workspace.">
+    <AuthShell title="You've been invited" sub="Join your classmates' group.">
       {me ? <JoinButton token={token} /> : (
         <div className="space-y-3">
           <p className="text-sm text-muted">Log in or create a free account to accept this invitation.</p>

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth";
 import { audit } from "@/lib/security";
-import { isUuid, notify } from "@/lib/semester";
+import { isUuid, notify } from "@/lib/group";
 import { slugify } from "@/lib/format";
 import type { ActionResult } from "@/components/ui/action-form";
 
@@ -18,7 +18,7 @@ export async function reviewDocument(id: string, approve: boolean): Promise<Acti
   if (!doc || doc.moderation_status !== "pending") return { ok: false, message: "This document isn't awaiting review." };
   await db.from("documents").update(approve ? { visibility: "public", moderation_status: "approved", published_at: new Date().toISOString() } : { moderation_status: "rejected" }).eq("id", id);
   await audit(user.id, approve ? "document.approve" : "document.reject", "document", id);
-  await notify(doc.uploaded_by, "publication", approve ? "Your PDF is now public" : "Your PDF was not approved for public sharing", approve ? `/public-notes/${id}` : "/my-semesters", doc.title);
+  await notify(doc.uploaded_by, "publication", approve ? "Your PDF is now public" : "Your PDF was not approved for public sharing", approve ? `/public-notes/${id}` : "/my-groups", doc.title);
   revalidatePath("/admin/content");
   return { ok: true, message: approve ? "Approved and published." : "Rejected." };
 }
@@ -112,15 +112,6 @@ export async function addSubject(fd: FormData): Promise<ActionResult> {
   revalidatePath("/admin/colleges");
   return { ok: true, message: "Subject added." };
 }
-export async function assignOwner(semesterId: string, userId: string): Promise<ActionResult> {
-  const { user } = await requireAdmin();
-  if (!isUuid(semesterId) || !isUuid(userId)) return { ok: false, message: "Invalid request." };
-  const { error } = await createAdminClient().rpc("admin_assign_owner", { p_actor: user.id, p_sem: semesterId, p_user: userId });
-  if (error) return { ok: false, message: "Could not assign owner." };
-  await notify(userId, "group", "You're now the owner of a semester group", `/semesters/${semesterId}`);
-  revalidatePath("/admin/colleges");
-  return { ok: true, message: "Owner assigned." };
-}
 export async function archiveRecord(table: "colleges" | "courses" | "semesters" | "subjects", id: string, status: "active" | "archived"): Promise<ActionResult> {
   const { user } = await requireAdmin();
   if (!["colleges", "courses", "semesters", "subjects"].includes(table) || !isUuid(id)) return { ok: false, message: "Invalid." };
@@ -128,4 +119,14 @@ export async function archiveRecord(table: "colleges" | "courses" | "semesters" 
   await audit(user.id, `${table}.${status}`, table, id);
   revalidatePath("/admin/colleges");
   return { ok: true, message: status === "archived" ? "Archived." : "Restored." };
+}
+
+/** Platform admins can archive an abusive group (hides it from discovery and blocks joins) or restore it. */
+export async function setGroupStatus(groupId: string, status: "active" | "archived"): Promise<ActionResult> {
+  const { user } = await requireAdmin();
+  if (!isUuid(groupId)) return { ok: false, message: "Invalid group." };
+  await createAdminClient().from("groups").update({ status }).eq("id", groupId);
+  await audit(user.id, `group.${status}`, "group", groupId);
+  revalidatePath("/admin/groups");
+  return { ok: true, message: status === "archived" ? "Group archived." : "Group restored." };
 }

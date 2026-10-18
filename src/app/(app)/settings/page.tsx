@@ -21,7 +21,7 @@ export default async function Settings() {
           <ActionForm action={updatePassword} className="space-y-3"><div><label htmlFor="password" className="label">New password</label><input id="password" name="password" type="password" minLength={8} required autoComplete="new-password" className="input" /></div><SubmitButton>Update password</SubmitButton></ActionForm></section>
         <section className="card p-5"><h2 className="mb-1 font-semibold">Session</h2><form action={logOut}><button className="btn-secondary mt-2">Log out</button></form></section>
         <section className="card border-danger/30 p-5"><h2 className="mb-1 font-semibold text-danger">Delete my account and data</h2>
-          <p className="mb-3 text-sm text-muted">An administrator will delete your profile, uploads and posts. If you own a semester you must transfer ownership first.</p>
+          <p className="mb-3 text-sm text-muted">An administrator will delete your profile, uploads and posts. If you own a group you must transfer ownership first.</p>
           {pending ? <p className="text-sm">Your deletion request is pending.</p> : <ActionForm action={requestDeletion} confirm="Request permanent deletion of your account and data?"><SubmitButton variant="danger">Request deletion</SubmitButton></ActionForm>}</section>
       </div>
     </>);

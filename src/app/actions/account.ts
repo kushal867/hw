@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { allow } from "@/lib/security";
-import { isUuid } from "@/lib/semester";
+import { isUuid } from "@/lib/group";
 import type { ActionResult } from "@/components/ui/action-form";
 
 export async function updateProfile(fd: FormData): Promise<ActionResult> {

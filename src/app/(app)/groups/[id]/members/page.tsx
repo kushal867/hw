@@ -1,17 +1,17 @@
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
-import { semesterAccess } from "@/lib/semester";
+import { groupAccess } from "@/lib/group";
 import { createClient } from "@/lib/supabase/server";
 import { BADGES, formatDate } from "@/lib/format";
-import { decideRequest, removeMember, setRole } from "@/app/actions/semesters";
+import { decideRequest, removeMember, setRole } from "@/app/actions/groups";
 
 export const metadata = { title: "Members" };
 
 export default async function Members({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const a = await semesterAccess(id);
+  const a = await groupAccess(id);
   const supabase = await createClient();
-  const { data: rows } = await supabase.from("semester_members").select("user_id, role, membership_status, joined_at, profiles(display_name, profile_badges:profile_badges(badge_type))")
-    .eq("semester_id", id).neq("membership_status", "removed").order("joined_at");
+  const { data: rows } = await supabase.from("group_members").select("user_id, role, membership_status, joined_at, profiles(display_name, profile_badges:profile_badges(badge_type))")
+    .eq("group_id", id).neq("membership_status", "removed").order("joined_at");
   const active = (rows ?? []).filter((r: any) => r.membership_status === "active").sort((x: any, y: any) => ["owner", "moderator", "member"].indexOf(x.role) - ["owner", "moderator", "member"].indexOf(y.role));
   const pending = (rows ?? []).filter((r: any) => r.membership_status === "pending");
   const isOwner = a.role === "owner" || a.isAdmin;

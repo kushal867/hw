@@ -2,9 +2,9 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Copy } from "lucide-react";
-import { createInvite } from "@/app/actions/semesters";
+import { createInvite } from "@/app/actions/groups";
 
-export function InviteManager({ semesterId }: { semesterId: string }) {
+export function InviteManager({ groupId }: { groupId: string }) {
   const [pending, start] = useTransition();
   const [created, setCreated] = useState<{ url: string; qr: string } | null>(null);
   return (
@@ -12,7 +12,7 @@ export function InviteManager({ semesterId }: { semesterId: string }) {
       <form className="grid gap-3 sm:grid-cols-2" onSubmit={(e) => {
         e.preventDefault(); const fd = new FormData(e.currentTarget);
         start(async () => {
-          const r = await createInvite(semesterId, fd);
+          const r = await createInvite(groupId, fd);
           (r.ok ? toast.success : toast.error)(r.message ?? "");
           if (r.ok) setCreated(r.data as { url: string; qr: string });
         });

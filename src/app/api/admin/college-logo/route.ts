@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { audit } from "@/lib/security";
-import { isUuid } from "@/lib/semester";
+import { isUuid } from "@/lib/group";
 
 const MAX = 2 * 1024 * 1024;
 const kind = (b: Buffer) =>

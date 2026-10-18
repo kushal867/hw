@@ -3,7 +3,7 @@ import { Download, Eye, FileText, Flag, Globe, Search, Trash2 } from "lucide-rea
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { UploadForm } from "@/components/upload-form";
 import { EmptyState, ErrorState, Pagination } from "@/components/ui/misc";
-import { semesterAccess } from "@/lib/semester";
+import { groupAccess, loadGroup } from "@/lib/group";
 import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { CATEGORIES, PUBLISHABLE, formatBytes, formatDate } from "@/lib/format";
@@ -14,22 +14,23 @@ const PAGE = 10;
 
 export default async function Files({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { id } = await params; const sp = await searchParams;
-  const a = await semesterAccess(id);
+  const a = await groupAccess(id);
   const page = Math.max(1, Number(sp.page) || 1);
   const supabase = await createClient();
-  const { data: subjects } = await supabase.from("subjects").select("id,name").eq("semester_id", id).order("name");
+  const group = await loadGroup(id);
+  const { data: subjects } = group?.semester_id ? await supabase.from("subjects").select("id,name").eq("semester_id", group.semester_id).order("name") : { data: [] as { id: string; name: string }[] };
   let q = supabase.from("documents").select("id,title,description,category,size_bytes,created_at,uploaded_by,moderation_status,visibility,tags,subjects(name),profiles(display_name)")
-    .eq("semester_id", id).neq("moderation_status", "removed");
+    .eq("group_id", id).neq("moderation_status", "removed");
   if (sp.q) q = q.ilike("title", `%${sp.q.replace(/[%_\\]/g, "\\$&")}%`);
   if (sp.category && CATEGORIES[sp.category]) q = q.eq("category", sp.category);
   if (sp.subject) q = q.eq("subject_id", sp.subject);
   q = sp.sort === "title" ? q.order("title") : q.order("created_at", { ascending: false });
   const { data: docs, error } = await q.range((page - 1) * PAGE, page * PAGE);
   const rows = (docs ?? []).slice(0, PAGE) as any[];
-  const base = `/semesters/${id}/files?` + new URLSearchParams(Object.entries(sp).filter(([k, v]) => v && k !== "page") as [string, string][]).toString();
+  const base = `/groups/${id}/files?` + new URLSearchParams(Object.entries(sp).filter(([k, v]) => v && k !== "page") as [string, string][]).toString();
   return (
     <div className="space-y-6">
-      {a.role && <UploadForm semesterId={id} subjects={subjects ?? []} maxMb={env.maxUploadBytes / 1024 / 1024} />}
+      {a.role && <UploadForm groupId={id} subjects={subjects ?? []} maxMb={env.maxUploadBytes / 1024 / 1024} />}
       <form role="search" className="grid gap-3 sm:grid-cols-4">
         <div className="relative sm:col-span-2"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" aria-hidden /><label htmlFor="q" className="sr-only">Search PDFs</label><input id="q" name="q" defaultValue={sp.q} placeholder="Search PDFs" className="input pl-9" /></div>
         <select name="category" aria-label="Category" defaultValue={sp.category ?? ""} className="input"><option value="">All categories</option>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
@@ -37,7 +38,7 @@ export default async function Files({ params, searchParams }: { params: Promise<
         <select name="sort" aria-label="Sort" defaultValue={sp.sort ?? "newest"} className="input"><option value="newest">Newest</option><option value="title">Title</option></select>
         <button className="btn-secondary">Apply</button>
       </form>
-      {error ? <ErrorState /> : !rows.length ? <EmptyState icon={FileText} title="No PDFs yet">{a.role ? "Upload the first one above. It stays private to this semester." : "No files to show."}</EmptyState> : (<>
+      {error ? <ErrorState /> : !rows.length ? <EmptyState icon={FileText} title="No PDFs yet">{a.role ? "Upload the first one above. It stays private to this group." : "No files to show."}</EmptyState> : (<>
         <ul className="space-y-3">{rows.map((d) => {
           const mine = d.uploaded_by === a.user.id;
           return (

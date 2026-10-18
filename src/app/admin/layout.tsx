@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { Logo } from "@/components/ui/misc";
 
-const LINKS = [["/admin/reports", "Reports"], ["/admin/content", "Review queue"], ["/admin/colleges", "Colleges & courses"], ["/admin/users", "Users"], ["/admin/audit-logs", "Audit & abuse"]];
+const LINKS = [["/admin/reports", "Reports"], ["/admin/content", "Review queue"], ["/admin/colleges", "Colleges & courses"], ["/admin/groups", "Groups"], ["/admin/users", "Users"], ["/admin/audit-logs", "Audit & abuse"]];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireAdmin();   // server-side gate for every /admin route

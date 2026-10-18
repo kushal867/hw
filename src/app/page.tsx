@@ -3,13 +3,13 @@ import { ArrowRight, BookMarked, FileText, FileDown, GraduationCap, MessagesSqua
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 
 const STEPS = [
-  { icon: GraduationCap, t: "Find your semester", d: "Browse college → course → semester, or scan a QR code from your class." },
+  { icon: GraduationCap, t: "Create or join a group", d: "Start a group for your class or homework, search public groups, or scan a QR code from a classmate." },
   { icon: FileText, t: "Share and discover PDFs", d: "Upload homework and notes privately to your classmates, or publish approved notes publicly." },
   { icon: MessagesSquare, t: "Learn together", d: "Ask questions, answer classmates, and build a bank of important exam questions." },
 ];
 const FEATURES = [
-  { icon: Search, t: "Find your college, course and subjects", d: "Every semester is organised the way your college organises it." },
-  { icon: Users, t: "Private semester classrooms", d: "Files and discussions are visible to your semester members only." },
+  { icon: Search, t: "Find your college, course and subjects", d: "Tag a group to your college semester so classmates and subjects line up." },
+  { icon: Users, t: "Student-created groups", d: "Anyone can start a group — public or private. Files and discussions stay with its members." },
   { icon: QrCode, t: "Join with a QR code", d: "Owners create expiring, limited-use invitations. Share a link or print the QR." },
   { icon: BookMarked, t: "Important exam questions", d: "Practice and previous-exam questions per subject. Teacher-confirmed is labelled only when verified." },
   { icon: FileDown, t: "Create study PDFs", d: "Turn your own notes and questions into a clean, printable PDF." },
@@ -17,7 +17,7 @@ const FEATURES = [
 ];
 const FAQ = [
   ["Is EduSathi really free?", "Yes. There are no subscriptions or payments at launch."],
-  ["Who can see my uploads?", "Uploads are private to your semester by default. Only you can request that a file be published, and it appears publicly only after review."],
+  ["Who can see my uploads?", "Uploads are private to your group by default. Only you can request that a file be published, and it appears publicly only after review."],
   ["Do I need to use my real name?", "No. Choose any display name. Your email is never shown to others."],
   ["Can I share textbooks?", "Only share material you own or have permission to share. Copyright complaints are handled through Content Reporting."],
 ];
@@ -54,7 +54,7 @@ export default function Home() {
         </section>
 
         <section className="mx-auto max-w-6xl px-4 py-16" aria-labelledby="feat">
-          <h2 id="feat" className="text-2xl font-bold">Everything a semester needs</h2>
+          <h2 id="feat" className="text-2xl font-bold">Everything a study group needs</h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
               <div key={f.t} className="card p-6">
@@ -67,7 +67,7 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-4">
             <h2 className="text-2xl font-bold">Why students use it</h2>
             <ul className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-              {["Everything for your semester in one organised place", "Study with classmates instead of searching chat groups for files", "Nepali (Unicode) text supported", "Works on your phone", "Free at launch"].map((b) => <li key={b} className="card px-4 py-3">{b}</li>)}
+              {["Everything for your class and homework in one organised place", "Study with classmates instead of searching chat groups for files", "Nepali (Unicode) text supported", "Works on your phone", "Free at launch"].map((b) => <li key={b} className="card px-4 py-3">{b}</li>)}
             </ul>
           </div>
         </section>
@@ -85,13 +85,13 @@ export default function Home() {
   );
 }
 
-/** Illustrative UI mock-up of a semester workspace. Contains only generic labels — no invented data. */
+/** Illustrative UI mock-up of a group workspace. Contains only generic labels — no invented data. */
 function ProductPreview() {
   return (
     <div className="card overflow-hidden shadow-pop" aria-hidden>
       <div className="flex items-center gap-1.5 border-b border-line bg-canvas px-4 py-2.5">
         <span className="h-2.5 w-2.5 rounded-full bg-line" /><span className="h-2.5 w-2.5 rounded-full bg-line" /><span className="h-2.5 w-2.5 rounded-full bg-line" />
-        <span className="ml-3 text-xs text-muted">Semester workspace · preview</span>
+        <span className="ml-3 text-xs text-muted">Group workspace · preview</span>
       </div>
       <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[140px_1fr]">
         <div className="space-y-1 border-r border-line p-3 text-xs">

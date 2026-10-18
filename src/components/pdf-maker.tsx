@@ -36,14 +36,14 @@ export function PdfMaker({ saved, semesters, defaultSemester, prefill }: { saved
     catch { toast.error("Could not create the PDF."); } finally { setBusy(false); }
   }
   async function saveToSemester() {
-    if (!saveSem) return toast.error("Join a semester first.");
+    if (!saveSem) return toast.error("Join or create a group first.");
     setBusy(true);
     try {
       const bytes = await make(); if (!bytes) return;
       const fd = new FormData();
-      fd.set("file", new File([bytes as BlobPart], "document.pdf", { type: "application/pdf" })); fd.set("semesterId", saveSem); fd.set("title", title.trim()); fd.set("category", "revision_notes"); fd.set("description", "Created with EduSathi PDF Maker");
+      fd.set("file", new File([bytes as BlobPart], "document.pdf", { type: "application/pdf" })); fd.set("groupId", saveSem); fd.set("title", title.trim()); fd.set("category", "revision_notes"); fd.set("description", "Created with EduSathi PDF Maker");
       const r = await fetch("/api/documents", { method: "POST", body: fd }); const j = await r.json();
-      (r.ok ? toast.success : toast.error)(r.ok ? "Saved as a private PDF in your semester. You can publish it from Shared PDFs." : j.message);
+      (r.ok ? toast.success : toast.error)(r.ok ? "Saved as a private PDF in your group. You can publish it from Shared PDFs." : j.message);
     } catch { toast.error("Network error."); } finally { setBusy(false); }
   }
 
@@ -89,7 +89,7 @@ export function PdfMaker({ saved, semesters, defaultSemester, prefill }: { saved
         <div className="card space-y-3 p-4">
           <button className="btn-primary w-full" onClick={download} disabled={busy}><Download className="h-4 w-4" aria-hidden />{busy ? "Working…" : "Download PDF"}</button>
           {semesters.length > 0 && (<div className="flex gap-2">
-            <label htmlFor="ss" className="sr-only">Save to semester</label>
+            <label htmlFor="ss" className="sr-only">Save to group</label>
             <select id="ss" value={saveSem} onChange={(e) => setSaveSem(e.target.value)} className="input">{semesters.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select>
             <button className="btn-secondary shrink-0" onClick={saveToSemester} disabled={busy}><Save className="h-4 w-4" aria-hidden />Save privately</button></div>)}
           <p className="text-xs text-muted">Only use content you wrote or have permission to share. Don&apos;t paste commercial textbook material.</p>

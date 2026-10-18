@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isConfigured } from "@/lib/env";
 import { MobileMenu } from "@/components/mobile-menu";
 
-const NAV = [["/", "Home"], ["/public-notes", "Explore Notes"], ["/colleges", "Colleges"], ["/about", "About"]] as const;
+const NAV = [["/", "Home"], ["/public-notes", "Explore Notes"], ["/find-groups", "Find Groups"], ["/colleges", "Colleges"], ["/about", "About"]] as const;
 
 export async function SiteHeader() {
   const me = isConfigured() ? await getCurrentUser() : null;

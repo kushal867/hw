@@ -33,9 +33,9 @@ export async function requireAdmin() {
 export const isRestricted = (p: Profile) => !!p.restricted_until && new Date(p.restricted_until) > new Date();
 
 /** Role of the current user in a semester, or null when not an active member. */
-export async function getMembership(semesterId: string, userId: string) {
+export async function getMembership(groupId: string, userId: string) {
   const supabase = await createClient();
-  const { data } = await supabase.from("semester_members").select("role, membership_status")
-    .eq("semester_id", semesterId).eq("user_id", userId).maybeSingle();
+  const { data } = await supabase.from("group_members").select("role, membership_status")
+    .eq("group_id", groupId).eq("user_id", userId).maybeSingle();
   return data && data.membership_status === "active" ? (data.role as "owner" | "moderator" | "member") : null;
 }

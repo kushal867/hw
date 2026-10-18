@@ -2,7 +2,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { joinWithToken } from "@/app/actions/semesters";
+import { joinWithToken } from "@/app/actions/groups";
 
 export function JoinButton({ token }: { token: string }) {
   const [pending, start] = useTransition();
@@ -12,6 +12,6 @@ export function JoinButton({ token }: { token: string }) {
       const r = await joinWithToken(token);
       (r.ok ? toast.success : toast.error)(r.message ?? "");
       if (r.redirect) router.push(r.redirect);
-    })}>{pending ? "Joining…" : "Join this semester"}</button>
+    })}>{pending ? "Joining…" : "Join this group"}</button>
   );
 }

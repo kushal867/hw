@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env, isConfigured } from "@/lib/env";
 
-const PRIVATE = ["/dashboard", "/profile", "/settings", "/notifications", "/my-semesters", "/semesters", "/subjects", "/pdf-maker", "/admin", "/moderator"];
+const PRIVATE = ["/dashboard", "/profile", "/settings", "/notifications", "/my-groups", "/groups", "/subjects", "/pdf-maker", "/admin", "/moderator"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

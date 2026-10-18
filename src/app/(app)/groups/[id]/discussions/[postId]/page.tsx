@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { EyeOff, Flag, Trash2 } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { LiveRefresh } from "@/components/live-refresh";
-import { isUuid, semesterAccess } from "@/lib/semester";
+import { isUuid, groupAccess } from "@/lib/group";
 import { createClient } from "@/lib/supabase/server";
 import { POST_TYPES, formatDate } from "@/lib/format";
 import { createComment, deleteComment, deletePost, moderate } from "@/app/actions/community";
@@ -11,15 +11,15 @@ import { createComment, deleteComment, deletePost, moderate } from "@/app/action
 export default async function PostPage({ params }: { params: Promise<{ id: string; postId: string }> }) {
   const { id, postId } = await params;
   if (!isUuid(postId)) notFound();
-  const a = await semesterAccess(id);
+  const a = await groupAccess(id);
   const supabase = await createClient();
-  const { data: post } = await supabase.from("discussion_posts").select("*, profiles(display_name), subjects(name)").eq("id", postId).eq("semester_id", id).maybeSingle();
+  const { data: post } = await supabase.from("discussion_posts").select("*, profiles(display_name), subjects(name)").eq("id", postId).eq("group_id", id).maybeSingle();
   if (!post) notFound();
   const { data: comments } = await supabase.from("discussion_comments").select("id,body,status,author_id,created_at,profiles(display_name)").eq("post_id", postId).order("created_at").limit(200);
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <LiveRefresh table="discussion_comments" filter={`post_id=eq.${postId}`} />
-      <Link href={`/semesters/${id}/discussions`} className="text-sm text-brand-700 hover:underline">← All discussions</Link>
+      <Link href={`/groups/${id}/discussions`} className="text-sm text-brand-700 hover:underline">← All discussions</Link>
       <article className="card p-5">
         <div className="flex flex-wrap gap-2"><span className="badge">{POST_TYPES[post.post_type]}</span>{post.subjects?.name && <span className="badge !bg-line !text-muted">{post.subjects.name}</span>}{post.status !== "visible" && <span className="badge !bg-warn/10 !text-warn">Hidden</span>}</div>
         <h1 className="mt-2 text-xl font-bold">{post.title}</h1>

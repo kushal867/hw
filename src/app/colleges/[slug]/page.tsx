@@ -21,10 +21,10 @@ export default async function College({ params }: { params: Promise<{ slug: stri
           <h2 id={`c-${c.id}`} className="font-semibold">{c.name} {c.degree_level && <span className="badge ml-2">{c.degree_level}</span>}</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
             {[...(c.semesters ?? [])].sort((a, b) => a.semester_number - b.semester_number).map((s) => (
-              <li key={s.id}><Link href={`/semesters/${s.id}`} className="btn-secondary !min-h-[36px]">Semester {s.semester_number}{s.academic_year ? ` · ${s.academic_year}` : ""}</Link></li>))}
+              <li key={s.id}><Link href={`/find-groups?college=${college.id}&semester=${s.semester_number}`} className="btn-secondary !min-h-[36px]">Semester {s.semester_number}{s.academic_year ? ` · ${s.academic_year}` : ""}</Link></li>))}
             {!c.semesters?.length && <li className="text-sm text-muted">No semesters yet.</li>}
           </ul>
         </section>))}</div>)}
-    <p className="mt-6 text-sm text-muted">Semester workspaces are private: join with an invitation from your class to see files and discussions.</p>
+    <p className="mt-6 text-sm text-muted">Students create groups for each semester. Tap a semester to find its groups, or <a className="underline" href="/groups/new">start your own</a>.</p>
   </main><SiteFooter /></>);
 }

@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Join EduSathi" };
 
 export default function SignupPage() {
   return (
-    <AuthShell title="Join EduSathi — it's free" sub="Create your account to join your semester community.">
+    <AuthShell title="Join EduSathi — it's free" sub="Create your account to join or create study groups.">
       <ActionForm action={signUp} className="space-y-4">
         <Field label="Display name" name="name" autoComplete="name" required minLength={2} maxLength={60} hint="Shown to classmates. You can use your first name or a nickname." />
         <Field label="Email" name="email" type="email" autoComplete="email" required hint="Never shown publicly." />

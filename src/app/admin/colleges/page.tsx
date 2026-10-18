@@ -3,17 +3,16 @@ import { PageHeader } from "@/components/ui/misc";
 import { CollegeLogo } from "@/components/college-logo";
 import { CollegeLogoUpload } from "@/components/college-logo-upload";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { addCollege, addCourse, addSemester, addSubject, archiveRecord, assignOwner } from "@/app/actions/admin";
+import { addCollege, addCourse, addSemester, addSubject, archiveRecord } from "@/app/actions/admin";
 
 export const metadata = { title: "Colleges & courses" };
 
 export default async function Colleges() {
   const db = createAdminClient();
-  const [{ data: colleges }, { data: courses }, { data: sems }, { data: reqs }] = await Promise.all([
+  const [{ data: colleges }, { data: courses }, { data: sems }] = await Promise.all([
     db.from("colleges").select("id,name,city,status,logo_path").order("name"),
     db.from("courses").select("id,name,status,college_id,colleges(name)").order("name"),
-    db.from("semesters").select("id,semester_number,academic_year,status,courses(name,colleges(name)),subjects(id,name,status)").order("semester_number").limit(500),
-    db.from("semester_requests").select("id,requester_id,semester_id,note,profiles(display_name),semesters(semester_number,courses(name))").eq("status", "open").limit(50),
+    db.from("semesters").select("id,semester_number,academic_year,status,courses(name,colleges(name)),subjects(id,name,status)").order("semester_number").limit(500)
   ]);
   const Sel = ({ name, items, label }: { name: string; label: string; items: { id: string; label: string }[] }) => (
     <div><label htmlFor={name} className="label">{label}</label><select id={name} name={name} required className="input"><option value="">Choose…</option>{items.map((i) => <option key={i.id} value={i.id}>{i.label}</option>)}</select></div>);
@@ -30,10 +29,6 @@ export default async function Colleges() {
       <ActionForm action={addSubject} resetOnSuccess className="card space-y-3 p-4"><h2 className="font-semibold">Add subject</h2>
         <Sel name="semester" label="Semester" items={semItems} /><div><label htmlFor="sname" className="label">Subject name</label><input id="sname" name="name" required className="input" /></div><div><label htmlFor="code" className="label">Code</label><input id="code" name="code" className="input" /></div><SubmitButton>Add subject</SubmitButton></ActionForm>
     </div>
-    <section className="mt-8"><h2 className="mb-3 font-semibold">Group requests</h2>
-      {!reqs?.length ? <p className="text-sm text-muted">No open requests.</p> : <ul className="space-y-2">{reqs.map((r: any) => (
-        <li key={r.id} className="card flex flex-wrap items-center gap-3 p-3 text-sm"><span><strong>{r.profiles?.display_name}</strong> wants {r.semesters?.courses?.name} S{r.semesters?.semester_number}{r.note && ` — “${r.note}”`}</span>
-          <div className="ml-auto"><ActionForm action={async () => { "use server"; return assignOwner(r.semester_id, r.requester_id); }} confirm="Make this student the owner of the group?"><SubmitButton>Approve as owner</SubmitButton></ActionForm></div></li>))}</ul>}</section>
     <section className="mt-8"><h2 className="mb-3 font-semibold">Existing records</h2>
       <ul className="space-y-3">{(colleges ?? []).map((c) => (
         <li key={c.id} className="card p-4"><div className="flex items-center gap-2"><CollegeLogo name={c.name} path={c.logo_path} size={40} /><span className="font-semibold">{c.name}</span><span className="text-sm text-muted">{c.city}</span><span className="badge">{c.status}</span>

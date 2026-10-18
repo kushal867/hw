@@ -18,7 +18,7 @@ export default async function ProfilePage() {
     supabase.from("courses").select("id,name,college_id").order("name"),
     supabase.from("semesters").select("id,semester_number,course_id").order("semester_number"),
     supabase.from("profile_badges").select("badge_type,awarded_at").eq("user_id", profile.id),
-    supabase.from("semester_members").select("role,semesters(id,semester_number,courses(name))").eq("user_id", profile.id).eq("membership_status", "active"),
+    supabase.from("group_members").select("role,groups(id,name)").eq("user_id", profile.id).eq("membership_status", "active"),
     supabase.from("documents").select("id", { count: "exact", head: true }).eq("uploaded_by", profile.id),
     supabase.from("discussion_posts").select("id", { count: "exact", head: true }).eq("author_id", profile.id),
     supabase.from("exam_questions").select("id", { count: "exact", head: true }).eq("created_by", profile.id),
@@ -47,8 +47,8 @@ export default async function ProfilePage() {
             <dl className="grid grid-cols-3 text-center"><div><dt className="text-xs text-muted">PDFs</dt><dd className="text-xl font-bold">{docs.count ?? 0}</dd></div><div><dt className="text-xs text-muted">Posts</dt><dd className="text-xl font-bold">{posts.count ?? 0}</dd></div><div><dt className="text-xs text-muted">Questions</dt><dd className="text-xl font-bold">{qs.count ?? 0}</dd></div></dl></section>
           <section className="card p-5"><h2 className="mb-1 font-semibold">Badges</h2><p className="mb-3 text-xs text-muted">Earned automatically from helpful, unreported contributions. Badges are informational and don&apos;t imply college affiliation.</p>
             {!badges.data?.length ? <p className="text-sm text-muted">No badges yet.</p> : <ul className="flex flex-wrap gap-2">{badges.data.map((b) => <li key={b.badge_type} className="badge" title={`Earned ${formatDate(b.awarded_at)}`}>{BADGES[b.badge_type]}</li>)}</ul>}</section>
-          <section className="card p-5"><h2 className="mb-3 font-semibold">My semesters</h2>
-            {!mems.data?.length ? <p className="text-sm text-muted">You haven&apos;t joined any.</p> : <ul className="space-y-1 text-sm">{mems.data.map((m: any) => <li key={m.semesters.id}><Link className="text-brand-700 hover:underline" href={`/semesters/${m.semesters.id}`}>{m.semesters.courses?.name} · Semester {m.semesters.semester_number}</Link> <span className="text-xs capitalize text-muted">({m.role})</span></li>)}</ul>}</section>
+          <section className="card p-5"><h2 className="mb-3 font-semibold">My groups</h2>
+            {!mems.data?.length ? <p className="text-sm text-muted">You haven&apos;t joined any.</p> : <ul className="space-y-1 text-sm">{mems.data.map((m: any) => <li key={m.groups.id}><Link className="text-brand-700 hover:underline" href={`/groups/${m.groups.id}`}>{m.groups.name}</Link> <span className="text-xs capitalize text-muted">({m.role})</span></li>)}</ul>}</section>
         </aside>
       </div>
     </>);

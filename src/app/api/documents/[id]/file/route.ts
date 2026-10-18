@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { servePdf } from "@/lib/serve-file";
 
-// Private path: RLS on `documents` only returns the row to active semester members / moderators / admins.
+// Private path: RLS on `documents` only returns the row to active group members / moderators / admins.
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) return new NextResponse("Not found", { status: 404 });
