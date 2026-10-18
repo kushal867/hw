@@ -6,7 +6,11 @@ import { Loader2 } from "lucide-react";
 
 export type ActionResult = { ok: boolean; message?: string; redirect?: string; data?: unknown };
 
-/** Runs a server action, shows toast feedback, disables the submit button while pending. */
+/**
+ * Runs a server action, shows toast feedback, and disables the fields while pending.
+ * `className` goes on the <fieldset> that actually contains the controls, so layout utilities
+ * such as space-y-*, grid and flex apply to the form's real children.
+ */
 export function ActionForm({ action, children, className, resetOnSuccess, confirm }: {
   action: (fd: FormData) => Promise<ActionResult>; children: ReactNode; className?: string; resetOnSuccess?: boolean; confirm?: string;
 }) {
@@ -14,7 +18,7 @@ export function ActionForm({ action, children, className, resetOnSuccess, confir
   const router = useRouter();
   const ref = useRef<HTMLFormElement>(null);
   return (
-    <form ref={ref} className={className} aria-busy={pending}
+    <form ref={ref} aria-busy={pending}
       onSubmit={(e) => {
         e.preventDefault();
         if (confirm && !window.confirm(confirm)) return;
@@ -28,7 +32,7 @@ export function ActionForm({ action, children, className, resetOnSuccess, confir
           } catch { toast.error("Something went wrong. Please try again."); }
         });
       }}>
-      <fieldset disabled={pending} className="contents">{children}</fieldset>
+      <fieldset disabled={pending} className={`min-w-0 ${className ?? ""}`}>{children}</fieldset>
       {pending && <span className="sr-only" role="status">Working…</span>}
     </form>
   );

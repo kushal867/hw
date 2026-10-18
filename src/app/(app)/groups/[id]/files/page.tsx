@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { Download, Eye, FileText, Flag, Globe, Search, Trash2 } from "lucide-react";
+import { Download, Eye, FileText, Flag, Globe, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
 import { UploadForm } from "@/components/upload-form";
 import { EmptyState, ErrorState, Pagination } from "@/components/ui/misc";
 import { groupAccess, loadGroup } from "@/lib/group";
 import { createClient } from "@/lib/server-db";
 import { env } from "@/lib/env";
-import { CATEGORIES, PUBLISHABLE, formatBytes, formatDate } from "@/lib/format";
+import { CATEGORIES, PUBLISHABLE, formatBytes, timeAgo } from "@/lib/format";
 import { deleteDocument, requestPublication, withdrawPublication } from "@/app/actions/documents";
 
 export const metadata = { title: "Shared PDFs" };
@@ -28,34 +28,63 @@ export default async function Files({ params, searchParams }: { params: Promise<
   const { data: docs, error } = await q.range((page - 1) * PAGE, page * PAGE);
   const rows = (docs ?? []).slice(0, PAGE) as any[];
   const base = `/groups/${id}/files?` + new URLSearchParams(Object.entries(sp).filter(([k, v]) => v && k !== "page") as [string, string][]).toString();
+  const hasFilters = !!(sp.q || sp.category || sp.subject);
+  const menuItem = "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-100";
   return (
-    <div className="space-y-6">
-      {a.role && <UploadForm groupId={id} subjects={subjects ?? []} maxMb={env.maxUploadBytes / 1024 / 1024} />}
-      <form role="search" className="grid gap-3 sm:grid-cols-4">
-        <div className="relative sm:col-span-2"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" aria-hidden /><label htmlFor="q" className="sr-only">Search PDFs</label><input id="q" name="q" defaultValue={sp.q} placeholder="Search PDFs" className="input pl-9" /></div>
-        <select name="category" aria-label="Category" defaultValue={sp.category ?? ""} className="input"><option value="">All categories</option>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        <select name="subject" aria-label="Subject" defaultValue={sp.subject ?? ""} className="input"><option value="">All subjects</option>{subjects?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>
-        <select name="sort" aria-label="Sort" defaultValue={sp.sort ?? "newest"} className="input"><option value="newest">Newest</option><option value="title">Title</option></select>
-        <button className="btn-secondary">Apply</button>
+    <div className="space-y-5">
+      {a.role && (
+        <details className="card group overflow-hidden" open={!rows.length && !hasFilters}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-50 text-indigo-600"><Plus className="h-5 w-5 transition group-open:rotate-45" aria-hidden /></span>
+              <span><span className="block font-bold">Upload a PDF</span><span className="block text-xs text-muted">Notes, homework, past papers. Private to this group by default.</span></span></span>
+          </summary>
+          <div className="border-t border-line p-5"><UploadForm groupId={id} subjects={subjects ?? []} maxMb={env.maxUploadBytes / 1024 / 1024} /></div>
+        </details>)}
+
+      <form role="search" className="flex flex-wrap gap-2">
+        <div className="relative min-w-[200px] flex-1"><Search className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-500" aria-hidden /><label htmlFor="q" className="sr-only">Search PDFs</label><input id="q" name="q" defaultValue={sp.q} placeholder="Search PDFs by title" className="input pl-10" /></div>
+        <select name="category" aria-label="Category" defaultValue={sp.category ?? ""} className="input !w-auto"><option value="">All categories</option>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+        {!!subjects?.length && <select name="subject" aria-label="Subject" defaultValue={sp.subject ?? ""} className="input !w-auto"><option value="">All subjects</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
+        <select name="sort" aria-label="Sort" defaultValue={sp.sort ?? "newest"} className="input !w-auto"><option value="newest">Newest</option><option value="title">Title A–Z</option></select>
+        <button className="btn-secondary"><SlidersHorizontal className="h-4 w-4" aria-hidden />Apply</button>
+        {hasFilters && <Link href={`/groups/${id}/files`} className="btn-ghost">Clear</Link>}
       </form>
-      {error ? <ErrorState /> : !rows.length ? <EmptyState icon={FileText} title="No PDFs yet">{a.role ? "Upload the first one above. It stays private to this group." : "No files to show."}</EmptyState> : (<>
+
+      {error ? <ErrorState /> : !rows.length ? <EmptyState icon={FileText} title={hasFilters ? "No PDFs match your search" : "No PDFs yet"}>{hasFilters ? "Try a different search or clear the filters." : a.role ? "Upload the first one above. It stays private to this group." : "No files to show."}</EmptyState> : (<>
         <ul className="space-y-3">{rows.map((d) => {
           const mine = d.uploaded_by === a.user.id;
+          const canPublish = mine && d.visibility === "private" && PUBLISHABLE.has(d.category) && ["private", "rejected"].includes(d.moderation_status);
+          const canUnpublish = mine && (d.visibility === "public" || d.moderation_status === "pending");
+          const canDelete = mine || a.canModerate;
           return (
-            <li key={d.id} className="card p-4">
-              <div className="flex flex-wrap items-start gap-2"><h3 className="font-semibold">{d.title}</h3><span className="badge">{CATEGORIES[d.category]}</span>
-                {d.visibility === "public" ? <span className="badge !bg-success/10 !text-success">Public</span> : d.moderation_status === "pending" ? <span className="badge !bg-warn/10 !text-warn">Pending review</span> : d.moderation_status === "rejected" ? <span className="badge !bg-danger/10 !text-danger">Not approved</span> : <span className="badge !bg-line !text-muted">Private</span>}</div>
-              {d.description && <p className="mt-1 text-sm text-muted">{d.description}</p>}
-              <p className="mt-1 text-xs text-muted">{[d.subjects?.name, d.profiles?.display_name, formatBytes(d.size_bytes), formatDate(d.created_at)].filter(Boolean).join(" · ")}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <a className="btn-secondary !min-h-[36px]" href={`/api/documents/${d.id}/file`} target="_blank" rel="noopener"><Eye className="h-4 w-4" aria-hidden />Preview</a>
-                <a className="btn-secondary !min-h-[36px]" href={`/api/documents/${d.id}/file?download=1`}><Download className="h-4 w-4" aria-hidden />Download</a>
-                <Link className="btn-ghost !min-h-[36px]" href={`/report-content?type=document&id=${d.id}`}><Flag className="h-4 w-4" aria-hidden />Report</Link>
-                {mine && d.visibility === "private" && PUBLISHABLE.has(d.category) && ["private", "rejected"].includes(d.moderation_status) &&
-                  <ActionForm action={async () => { "use server"; return requestPublication(d.id); }} confirm="Submit this PDF for public publication? It will only go live if a reviewer approves it. Only share material you have the right to share."><SubmitButton variant="secondary"><Globe className="h-4 w-4" aria-hidden />Publish publicly</SubmitButton></ActionForm>}
-                {mine && (d.visibility === "public" || d.moderation_status === "pending") &&
-                  <ActionForm action={async () => { "use server"; return withdrawPublication(d.id); }}><SubmitButton variant="secondary">Make private</SubmitButton></ActionForm>}
-                {(mine || a.canModerate) && <ActionForm action={async () => { "use server"; return deleteDocument(d.id); }} confirm="Delete this document permanently?"><SubmitButton variant="ghost"><Trash2 className="h-4 w-4" aria-hidden />Delete</SubmitButton></ActionForm>}
+            <li key={d.id} className="card p-4 sm:p-5">
+              <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+                <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-600"><FileText className="h-6 w-6" /></span>
+                <div className="min-w-0 flex-1 basis-48">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-[15px] font-bold leading-snug">{d.title}</h3>
+                    {d.visibility === "public" ? <span className="badge-success">Public</span> : d.moderation_status === "pending" ? <span className="badge-warn">Pending review</span> : d.moderation_status === "rejected" ? <span className="badge-danger">Not approved</span> : null}
+                  </div>
+                  {d.description && <p className="mt-1 line-clamp-2 text-sm text-muted">{d.description}</p>}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted">
+                    <span className="badge">{CATEGORIES[d.category]}</span>{d.subjects?.name && <span className="badge-muted">{d.subjects.name}</span>}
+                    <span>{d.profiles?.display_name}</span><span>{formatBytes(d.size_bytes)}</span><span>{timeAgo(d.created_at)}</span>
+                  </div>
+                  {!!d.tags?.length && <p className="mt-2 flex flex-wrap gap-1.5">{d.tags.map((t: string) => <span key={t} className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">#{t}</span>)}</p>}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5 max-sm:ml-16">
+                  <a className="btn-secondary !min-h-[38px]" href={`/api/documents/${d.id}/file`} target="_blank" rel="noopener"><Eye className="h-4 w-4" aria-hidden /><span className="hidden sm:inline">Preview</span><span className="sr-only sm:hidden">Preview</span></a>
+                  <a className="btn-ghost !min-h-[38px] !px-2.5" href={`/api/documents/${d.id}/file?download=1`} aria-label="Download" title="Download"><Download className="h-[18px] w-[18px]" aria-hidden /></a>
+                  <details className="relative">
+                    <summary className="btn-ghost !min-h-[38px] !px-2.5 cursor-pointer list-none [&::-webkit-details-marker]:hidden" aria-label="More actions" title="More actions"><MoreHorizontal className="h-[18px] w-[18px]" aria-hidden /></summary>
+                    <div className="absolute right-0 top-full z-30 mt-1 w-56 rounded-2xl border border-line bg-surface p-1.5 shadow-pop">
+                      {canPublish && <ActionForm action={async () => { "use server"; return requestPublication(d.id); }} confirm="Submit this PDF for public publication? It will only go live if a reviewer approves it. Only share material you have the right to share."><button className={menuItem}><Globe className="h-4 w-4" aria-hidden />Publish publicly</button></ActionForm>}
+                      {canUnpublish && <ActionForm action={async () => { "use server"; return withdrawPublication(d.id); }}><button className={menuItem}><Globe className="h-4 w-4" aria-hidden />Make private again</button></ActionForm>}
+                      <Link className={menuItem} href={`/report-content?type=document&id=${d.id}`}><Flag className="h-4 w-4" aria-hidden />Report</Link>
+                      {canDelete && <ActionForm action={async () => { "use server"; return deleteDocument(d.id); }} confirm="Delete this document permanently?"><button className={`${menuItem} text-red-600 hover:!bg-red-50`}><Trash2 className="h-4 w-4" aria-hidden />Delete</button></ActionForm>}
+                    </div>
+                  </details>
+                </div>
               </div>
             </li>);
         })}</ul>

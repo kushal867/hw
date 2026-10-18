@@ -14,8 +14,8 @@ export function MobileMenu({ nav, signedIn }: { nav: readonly (readonly [string,
         <nav id="mobile-nav" aria-label="Mobile" className="absolute inset-x-0 top-16 space-y-1 border-b border-line bg-surface p-4 shadow-pop">
           {nav.map(([h, l]) => <Link key={h} href={h} onClick={() => setOpen(false)} className="block rounded-control px-3 py-3 font-medium hover:bg-brand-50">{l}</Link>)}
           <div className="grid gap-2 pt-2">
-            {signedIn ? <Link href="/dashboard" className="btn-primary">Dashboard</Link> : <>
-              <Link href="/login" className="btn-secondary">Log In</Link><Link href="/signup" className="btn-primary">Join EduSathi</Link></>}
+            {signedIn ? <Link href="/dashboard" className="btn-primary">Go to your groups</Link> : <>
+              <Link href="/login" className="btn-secondary">Log in</Link><Link href="/signup" className="btn-primary">Join free</Link></>}
           </div>
         </nav>
       )}

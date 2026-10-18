@@ -23,3 +23,22 @@ export const PUBLISHABLE = new Set(["lecture_notes", "previous_papers", "importa
 
 /** "Semester 3" / "Year 2": programs name their terms differently (see courses.term_label). */
 export const termName = (label: string | null | undefined, n: number | string) => `${label ?? "Semester"} ${n}`;
+
+/** "1 member" / "2 members" */
+export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** Short relative time for feeds: "just now", "5 min ago", "3 h ago", "2 days ago", else a date. */
+export function timeAgo(iso: string | Date, now = new Date()) {
+  const s = Math.max(0, (now.getTime() - new Date(iso).getTime()) / 1000);
+  if (s < 45) return "just now";
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  if (s < 7 * 86400) return plural(Math.round(s / 86400), "day") + " ago";
+  return formatDate(iso);
+}
+
+/** Badge colour per discussion category. */
+export const POST_TONE: Record<string, string> = {
+  general: "bg-slate-100 text-slate-700", homework_help: "bg-amber-50 text-amber-700", notes_request: "bg-indigo-50 text-indigo-700",
+  exam_prep: "bg-rose-50 text-rose-700", announcement: "bg-emerald-50 text-emerald-700",
+};

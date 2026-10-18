@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileText, Search } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
-import { EmptyState, ErrorState, NotConfigured, PageHeader, Pagination } from "@/components/ui/misc";
+import { EmptyState, ErrorState, NotConfigured, Pagination } from "@/components/ui/misc";
 import { createClient } from "@/lib/server-db";
 import { isConfigured } from "@/lib/env";
 import { CATEGORIES, formatBytes, formatDate, termName } from "@/lib/format";
@@ -43,17 +43,22 @@ export default async function PublicNotes({ searchParams }: { searchParams: Prom
       ) : (<>
         <ul className="grid gap-4 md:grid-cols-2">
           {rows.map((n) => (
-            <li key={n.id}><Link href={`/public-notes/${n.id}`} className="card block h-full p-5 transition hover:border-brand-200 hover:shadow-pop">
-              <span className="badge">{CATEGORIES[n.category]}</span>
-              <h2 className="mt-2 font-semibold">{n.title}</h2>
-              <p className="mt-1 text-sm text-muted">{[n.college_name, n.course_name, (n.semester_number ? termName(n.term_label, n.semester_number) : null), n.subject_name].filter(Boolean).join(" · ")}</p>
-              <p className="mt-3 text-xs text-muted">By {n.uploader_name} · {formatBytes(n.size_bytes)} · {formatDate(n.published_at)}</p>
+            <li key={n.id}><Link href={`/public-notes/${n.id}`} className="card card-hover flex h-full gap-4 p-5">
+              <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-600"><FileText className="h-6 w-6" /></span>
+              <div className="min-w-0 flex-1"><span className="badge">{CATEGORIES[n.category]}</span>
+                <h2 className="mt-2 text-[15px] font-bold leading-snug">{n.title}</h2>
+                <p className="mt-1 line-clamp-2 text-sm text-muted">{[n.college_name, n.course_name, (n.semester_number ? termName(n.term_label, n.semester_number) : null), n.subject_name].filter(Boolean).join(" · ") || "Shared by a student group"}</p>
+                <p className="mt-3 text-xs text-muted">By {n.uploader_name} · {formatBytes(n.size_bytes)} · {formatDate(n.published_at)}</p></div>
             </Link></li>))}
         </ul>
         <Pagination page={page} hasNext={(data?.length ?? 0) > PAGE} base={base} /></>)}
     </>);
   }
-  return (<><SiteHeader /><main id="main" className="mx-auto max-w-6xl px-4 py-10">
-    <PageHeader title="Public Notes" sub="Approved study notes shared openly by students." />{body}
+  return (<><SiteHeader /><main id="main">
+    <section className="bg-hero border-b border-line"><div className="mx-auto max-w-6xl px-4 pb-12 pt-12 sm:pt-16">
+      <p className="eyebrow mb-2">Public notes</p><h1 className="text-3xl font-extrabold sm:text-4xl">Study notes shared by students</h1>
+      <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted">Every file here was published by its uploader and approved by a reviewer. Search by title, college, term or category.</p>
+    </div></section>
+    <div className="mx-auto max-w-6xl px-4 py-10">{body}</div>
   </main><SiteFooter /></>);
 }
