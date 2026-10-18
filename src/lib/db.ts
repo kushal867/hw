@@ -1,5 +1,6 @@
 import "server-only";
 import { Pool, types, type QueryResult } from "pg";
+import { logger } from "@/lib/log";
 
 // Match PostgREST JSON: timestamps as ISO strings, bigint as numbers.
 types.setTypeParser(1184, (v) => new Date(v).toISOString());
@@ -13,7 +14,22 @@ types.setTypeParser(20, (v) => Number(v));
  */
 
 declare global { var __esPool: Pool | undefined; var __esRels: Promise<Rel[]> | undefined; }
-const pool = (globalThis.__esPool ??= new Pool({ connectionString: process.env.DATABASE_URL, max: 10 }));
+function makePool() {
+  const p = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: Number(process.env.DB_POOL_MAX ?? 10),
+    connectionTimeoutMillis: 5_000,                                              // fail fast instead of hanging requests when the DB is down
+    idleTimeoutMillis: 30_000,
+    statement_timeout: Number(process.env.DB_STATEMENT_TIMEOUT_MS ?? 15_000),    // a runaway query cannot hold a connection forever
+    query_timeout: 20_000,
+    idle_in_transaction_session_timeout: 15_000,
+    application_name: "edusathi-web",
+  });
+  // An error on an IDLE pooled connection (DB restart, network blip) is emitted here; unhandled it would crash the whole process.
+  p.on("error", (e) => logger.error("db.pool_error", { message: e.message }));
+  return p;
+}
+const pool = (globalThis.__esPool ??= makePool());
 
 export type DbError = { code?: string; message: string; details?: string };
 /** Rows are loosely typed (like an untyped PostgREST client): arrays for lists, objects after single()/maybeSingle(). */
@@ -26,24 +42,45 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const IDENT = /^[a-z_][a-z0-9_]*$/i;
 const ident = (s: string) => { if (!IDENT.test(s)) throw new Error(`Invalid identifier: ${s}`); return `"${s}"`; };
 
-async function exec(scope: Scope, sql: string, params: unknown[] = []): Promise<QueryResult> {
+const SLOW_MS = Number(process.env.DB_SLOW_QUERY_MS ?? 500);
+/** Failures that are safe to retry because the whole transaction rolled back: deadlock, serialization failure, connection never established. */
+const RETRYABLE = /^(40001|40P01|57P03|08006|08001|ECONNRESET|ECONNREFUSED|ETIMEDOUT)$/;
+
+async function execOnce(scope: Scope, sql: string, params: unknown[]): Promise<QueryResult> {
   const uid = scope.uid && UUID.test(scope.uid) ? scope.uid : "";
   const c = await pool.connect();
+  let broken = false;
   try {
     await c.query(`BEGIN; SET LOCAL ROLE ${scope.role}; SELECT set_config('request.jwt.claim.sub', '${uid}', true)`);
     const r = await c.query(sql, params);
     await c.query("COMMIT");
     return r;
   } catch (e) {
-    await c.query("ROLLBACK").catch(() => {});
+    await c.query("ROLLBACK").catch(() => { broken = true; });                   // if even ROLLBACK fails the connection is unusable: discard it
     throw e;
-  } finally { c.release(); }
+  } finally { c.release(broken ? true : undefined); }
+}
+
+async function exec(scope: Scope, sql: string, params: unknown[] = []): Promise<QueryResult> {
+  const t0 = Date.now();
+  try {
+    try { return await execOnce(scope, sql, params); }
+    catch (e: any) {
+      if (!RETRYABLE.test(e?.code ?? "")) throw e;
+      logger.warn("db.retry", { code: e.code });
+      await new Promise((r) => setTimeout(r, 50 + Math.random() * 100));
+      return await execOnce(scope, sql, params);
+    }
+  } finally {
+    const ms = Date.now() - t0;
+    if (ms >= SLOW_MS) logger.warn("db.slow_query", { ms, role: scope.role, sql: sql.replace(/\s+/g, " ").slice(0, 200) });   // params are never logged
+  }
 }
 
 /** Expected business-rule failures (unique/FK/check/RLS/raised exceptions) stay quiet; anything else is logged for operators. */
 const QUIET = /^(23|42501|P0001|PGRST)/;
 const toError = (e: any): DbError => {
-  if (!QUIET.test(e?.code ?? "")) console.error("[db]", e?.code ?? "", e?.message ?? e);
+  if (!QUIET.test(e?.code ?? "")) logger.error("db.error", { code: e?.code, message: e?.message ?? String(e) });
   return { code: e?.code, message: e?.message ?? "Database error", details: e?.detail };
 };
 
@@ -56,7 +93,7 @@ function relations(): Promise<Rel[]> {
       (select array_agg(a.attname::text order by k.ord) from unnest(c.confkey) with ordinality k(attnum, ord) join pg_attribute a on a.attrelid = c.confrelid and a.attnum = k.attnum) as "refCols"
     from pg_constraint c join pg_class t on t.oid = c.conrelid join pg_class rt on rt.oid = c.confrelid
     join pg_namespace n on n.oid = t.relnamespace and n.nspname = 'public'
-    where c.contype = 'f'`).then((r) => r.rows as Rel[]));
+    where c.contype = 'f'`).then((r) => r.rows as Rel[]).catch((e) => { globalThis.__esRels = undefined; throw e; }));   // never cache a failure
 }
 
 // ───────── select() parsing:  "id, courses(id,name,colleges(name)), reporter:profiles!fk_name(display_name)" ─────────
@@ -87,7 +124,7 @@ function parseSelect(s: string): Item[] {
   });
 }
 
-type Filter = { col: string; op: "eq" | "neq" | "is" | "in" | "ilike" | "gte"; val: unknown };
+type Filter = { col: string; op: "eq" | "neq" | "is" | "in" | "ilike" | "gte" | "gt" | "lt" | "lte"; val: unknown };
 
 class Builder implements PromiseLike<DbResult> {
   private action: "select" | "insert" | "update" | "delete" = "select";
@@ -114,6 +151,9 @@ class Builder implements PromiseLike<DbResult> {
   in(col: string, val: unknown[]) { this.filters.push({ col, op: "in", val }); return this; }
   ilike(col: string, val: string) { this.filters.push({ col, op: "ilike", val }); return this; }
   gte(col: string, val: unknown) { this.filters.push({ col, op: "gte", val }); return this; }
+  gt(col: string, val: unknown) { this.filters.push({ col, op: "gt", val }); return this; }
+  lt(col: string, val: unknown) { this.filters.push({ col, op: "lt", val }); return this; }
+  lte(col: string, val: unknown) { this.filters.push({ col, op: "lte", val }); return this; }
   order(col: string, opts?: { ascending?: boolean }) { this.orders.push({ col, asc: opts?.ascending !== false }); return this; }
   limit(n: number) { this.lim = n; return this; }
   range(from: number, to: number) { this.off = from; this.lim = to - from + 1; return this; }
@@ -175,6 +215,9 @@ class Builder implements PromiseLike<DbResult> {
       case "eq": return `${expr} = ${this.p(f.val)}`;
       case "neq": return `${expr} <> ${this.p(f.val)}`;
       case "gte": return `${expr} >= ${this.p(f.val)}`;
+      case "gt": return `${expr} > ${this.p(f.val)}`;
+      case "lt": return `${expr} < ${this.p(f.val)}`;
+      case "lte": return `${expr} <= ${this.p(f.val)}`;
       case "ilike": return `${expr} ilike ${this.p(f.val)}`;
       case "in": return `${expr} = any(${this.p(f.val)})`;
       case "is": return f.val === null ? `${expr} is null` : `${expr} is ${f.val ? "true" : "false"}`;
@@ -286,5 +329,9 @@ export const clientFor = (userId: string | null) => client(userId ? { role: "aut
 /** Raw SQL as the service role, for auth tables that the PostgREST-style builder doesn't model. */
 export async function adminSql<T = any>(sql: string, params: unknown[] = []): Promise<T[]> {
   return (await exec({ role: "service_role", uid: null }, sql, params)).rows as T[];
+}
+/** Raw SQL as a signed-in user: Row Level Security applies exactly as for the builder. For queries the builder can't express. */
+export async function userSql<T = any>(userId: string, sql: string, params: unknown[] = []): Promise<T[]> {
+  return (await exec({ role: "authenticated", uid: userId }, sql, params)).rows as T[];
 }
 export { toError };

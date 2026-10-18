@@ -20,6 +20,12 @@ export async function createSession(userId: string) {
   });
 }
 
+/** Is this raw session cookie value still valid? Used by long-lived connections (SSE) to end themselves after logout/expiry. */
+export async function isSessionTokenValid(token: string | undefined) {
+  if (!token || token.length > 100) return false;
+  return (await adminSql("select 1 from auth.sessions where token_hash = $1 and expires_at > now()", [sha(token)])).length > 0;
+}
+
 /** The signed-in user, validated against the database (not just the cookie). */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;

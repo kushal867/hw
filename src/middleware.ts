@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requestOrigin } from "@/lib/origin";
 
-const PRIVATE = ["/dashboard", "/profile", "/settings", "/notifications", "/my-groups", "/groups", "/subjects", "/pdf-maker", "/admin", "/moderator"];
+const PRIVATE = ["/dashboard", "/profile", "/settings", "/notifications", "/my-groups", "/groups", "/chat", "/subjects", "/pdf-maker", "/admin", "/moderator"];
 
 /** Cheap gate: private areas need a session cookie. The cookie is fully validated against the database on the server. */
 export function middleware(request: NextRequest) {
