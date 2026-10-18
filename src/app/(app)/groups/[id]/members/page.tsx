@@ -1,6 +1,7 @@
 import { Check, MoreHorizontal, ShieldCheck, UserMinus, X } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { ActionForm } from "@/components/ui/action-form";
+import { StartChatButton } from "@/components/chat/start-chat-button";
 import { SectionTitle } from "@/components/ui/misc";
 import { groupAccess } from "@/lib/group";
 import { createClient } from "@/lib/server-db";
@@ -47,6 +48,7 @@ export default async function Members({ params }: { params: Promise<{ id: string
                 </div>
                 <p className="mt-1 text-xs text-muted">Joined {formatDate(m.joined_at)}</p>
               </div>
+              {m.user_id !== a.user.id && <StartChatButton userId={m.user_id} name={m.profiles?.display_name ?? "member"} variant="ghost" />}
               {canManage && (
                 <details className="relative"><summary className="btn-ghost !min-h-[38px] !px-2.5 cursor-pointer list-none [&::-webkit-details-marker]:hidden" aria-label={`Actions for ${m.profiles?.display_name}`}><MoreHorizontal className="h-[18px] w-[18px]" aria-hidden /></summary>
                   <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-2xl border border-line bg-surface p-1.5 shadow-pop">

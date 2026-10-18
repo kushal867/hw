@@ -46,6 +46,9 @@ colleges 1─* courses 1─* semesters 1─* subjects
 - `colleges.country` (default `NP`) allows expansion to other countries without a redesign.
 - Documents, posts and questions may carry a `subject_id`; a trigger (`check_subject_in_group`) guarantees the subject belongs to the semester the group is linked to.
 
+## Chat (migrations 0008–0009)
+`chat_rooms`, `chat_participants`, `chat_messages`, `chat_reactions`, `user_blocks`; see `docs/CHAT.md`. 0009 makes `check_rate_limit` a sliding window.
+
 ## Core tables
 
 | Table | Key points |

@@ -62,6 +62,7 @@ export default async function GroupLayout({ children, params }: { children: Reac
       </div>);
   }
 
+  const { data: chatRoom } = await supabase.from("chat_rooms").select("id").eq("group_id", id).maybeSingle();
   const head = (t: string, extra?: (q: any) => any) => { const q = supabase.from(t).select("id", { count: "exact", head: true }).eq("group_id", id); return extra ? extra(q) : q; };
   const [files, posts, qs, members] = await Promise.all([head("documents", (q) => q.neq("moderation_status", "removed")), head("discussion_posts"), head("exam_questions"), head("group_members", (q) => q.eq("membership_status", "active"))]);
   const counts = { files: files.count ?? 0, discussions: posts.count ?? 0, questions: qs.count ?? 0, members: members.count ?? 0 };
@@ -84,7 +85,7 @@ export default async function GroupLayout({ children, params }: { children: Reac
         </div>
       </div>
     </header>
-    <GroupTabs id={id} canModerate={a.canModerate} hasSubjects={!!group.semester_id} counts={counts} />
+    <GroupTabs id={id} canModerate={a.canModerate} hasSubjects={!!group.semester_id} counts={counts} chatRoomId={chatRoom?.id ?? null} />
     <div>{children}</div>
   </div>);
 }

@@ -18,7 +18,7 @@ Free student community, homework and PDF-sharing platform for Nepal. **Any stude
 
 ```bash
 cp .env.example .env.local      # fill in values
-# create the database, then apply supabase/tests_stub.sql and supabase/migrations/0001..0007 in order (see docs/DATABASE.md)
+# create the database, then apply supabase/tests_stub.sql and supabase/migrations/0001..0009 in order (see docs/DATABASE.md)
 npm install
 npm run dev
 ```
@@ -47,6 +47,9 @@ npm test                         # unit tests: PDF validation, tokens, redirects
 PGHOST=... PGUSER=postgres scripts/test-db.sh   # database/RLS isolation suite (needs a Postgres)
 npm run typecheck && npm run build
 ```
+
+## Chat
+Group chat + DMs with live delivery (SSE). See `docs/CHAT.md`. Health check: `GET /api/health`.
 
 ## Architecture notes
 

@@ -144,6 +144,17 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.denied($$insert into chat_messages (room_id, sender_id, body) select g1room, '00000000-0000-0000-0000-00000000000b', 'archived' from ids$$, 'sending in an archived group', '42501');
 select pg_temp.assert((select count(*) from chat_messages m join ids on ids.g1room = m.room_id)>0, 'archived group chat stays readable');
 
+-- ── rate limiter: sliding window ──
+reset role; select pg_temp.as_user(null); set local role service_role;
+select pg_temp.assert(check_rate_limit('00000000-0000-0000-0000-00000000000a','rl-basic',3,3600) and check_rate_limit('00000000-0000-0000-0000-00000000000a','rl-basic',3,3600) and check_rate_limit('00000000-0000-0000-0000-00000000000a','rl-basic',3,3600) and not check_rate_limit('00000000-0000-0000-0000-00000000000a','rl-basic',3,3600), 'allows exactly max calls then blocks');
+-- a nearly-full PREVIOUS window must still count: this is what stops the boundary burst a fixed window allows
+reset role; insert into rate_limits (user_id, bucket, window_start, hits) values ('00000000-0000-0000-0000-00000000000a','rl-prev', to_timestamp(floor(extract(epoch from now())/86400)*86400) - interval '1 day', 1000000);
+set local role service_role;
+select pg_temp.assert(not check_rate_limit('00000000-0000-0000-0000-00000000000a','rl-prev',50,86400), 'previous window carries over (no 2x boundary burst)');
+select pg_temp.assert(check_rate_limit('00000000-0000-0000-0000-00000000000e','rl-prev',50,86400), 'other users are unaffected');
+reset role; set local role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.denied($$select check_rate_limit('00000000-0000-0000-0000-00000000000b','x',1,60)$$, 'users cannot call the rate limiter directly', '42501');
+
 -- ── reports + restrictions ──
 insert into reports (reporter_id, target_type, target_id, reason) values ('00000000-0000-0000-0000-00000000000b','chat_message',(select id from rmsg),'spam');
 reset role; select pg_temp.as_user(null); update profiles set restricted_until = now() + interval '1 day' where id='00000000-0000-0000-0000-00000000000b'; set local role authenticated;

@@ -18,7 +18,8 @@ for (const [label, width, height] of [["desktop", 1280, 900], ["phone", 390, 844
   await page.goto(`${BASE_URL}/login`); await page.fill("[name=email]", EMAIL); await page.fill("[name=password]", PASSWORD);
   await page.click('button:has-text("Log In")'); await page.waitForTimeout(1500);
   for (const path of pages) {
-    await page.goto(BASE_URL + path, { waitUntil: "networkidle" }).catch(() => {});
+    await page.goto(BASE_URL + path, { waitUntil: "load" }).catch(() => {});      // not "networkidle": the chat event stream keeps one connection open
+    await page.waitForTimeout(400);
     await page.addScriptTag({ content: axeSrc });
     const r = await page.evaluate(() => window.axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
     for (const v of r.violations) { failures++; console.log(`[${label}] ${path}  ${v.impact}  ${v.id}: ${v.help} (${v.nodes.length}) e.g. ${v.nodes[0].target.join(" ")}`); }

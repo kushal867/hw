@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
+import { ChatProvider } from "@/components/chat/chat-provider";
+import { unreadFor } from "@/lib/chat/queries";
 import { BottomNav, SideNav } from "@/components/app-nav";
 import { UserMenu } from "@/components/user-menu";
 import { Logo } from "@/components/ui/misc";
@@ -9,13 +11,15 @@ import { createClient } from "@/lib/server-db";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { profile } = await requireUser();
   const supabase = await createClient();
-  const [{ count }, { data: mine }] = await Promise.all([
+  const [{ count }, { data: mine }, chatUnread] = await Promise.all([
     supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
     supabase.from("group_members").select("joined_at, groups(id, name, status)").eq("user_id", profile.id).eq("membership_status", "active").order("joined_at", { ascending: false }).limit(12),
+    unreadFor(profile.id).catch(() => []),                                  // chat must never take the whole app down
   ]);
   const unread = count ?? 0;
   const groups = ((mine ?? []) as any[]).filter((m) => m.groups?.status === "active").slice(0, 8).map((m) => ({ id: m.groups.id as string, name: m.groups.name as string }));
   return (
+    <ChatProvider userId={profile.id} initialUnread={chatUnread}>
     <div className="min-h-screen lg:grid lg:grid-cols-[272px_1fr]">
       <aside className="sticky top-0 hidden h-screen flex-col gap-6 border-r border-line bg-surface p-4 lg:flex">
         <div className="px-2 pt-1"><Logo href="/dashboard" /></div>
@@ -40,7 +44,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </header>
         <main id="main" className="mx-auto max-w-5xl px-4 py-7 lg:px-8 lg:py-9">{children}</main>
       </div>
-      <BottomNav unread={unread} />
+      <BottomNav />
     </div>
+    </ChatProvider>
   );
 }

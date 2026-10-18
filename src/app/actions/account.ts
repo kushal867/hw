@@ -54,7 +54,7 @@ export async function markRead(id?: string): Promise<ActionResult> {
   return { ok: true };
 }
 
-const TYPES = ["document", "post", "comment", "question", "user", "copyright"] as const;
+const TYPES = ["document", "post", "comment", "question", "user", "copyright", "chat_message"] as const;
 export async function submitReport(fd: FormData): Promise<ActionResult> {
   const { user } = await requireUser();
   const p = z.object({

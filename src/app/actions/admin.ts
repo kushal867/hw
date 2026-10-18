@@ -42,6 +42,7 @@ export async function resolveReport(id: string, outcome: "actioned" | "dismissed
     if (r.target_type === "post") await db.from("discussion_posts").update({ status: "removed" }).eq("id", r.target_id);
     if (r.target_type === "comment") await db.from("discussion_comments").update({ status: "removed" }).eq("id", r.target_id);
     if (r.target_type === "question") await db.from("exam_questions").update({ status: "removed" }).eq("id", r.target_id);
+    if (r.target_type === "chat_message") await db.from("chat_messages").update({ deleted_at: new Date().toISOString(), body: null, deleted_by: user.id }).eq("id", r.target_id).is("deleted_at", null);   // text is erased, not just hidden
   }
   await db.from("reports").update({ status: outcome, reviewed_by: user.id, reviewed_at: new Date().toISOString() }).eq("id", id);
   await audit(user.id, `report.${outcome}`, r.target_type, r.target_id, { report: id, hidden: hideTarget });
