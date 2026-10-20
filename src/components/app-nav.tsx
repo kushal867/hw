@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, FileDown, Globe, Home, MessagesSquare, Plus, Shield, Users } from "lucide-react";
+import { Bookmark, Compass, FileDown, Globe, Home, MessagesSquare, Plus, Shield, Users } from "lucide-react";
 import { useChatOptional } from "@/components/chat/chat-provider";
 import { GroupAvatar } from "@/components/group-avatar";
 
@@ -13,6 +13,7 @@ const PRIMARY = [
   { href: "/chat", label: "Chats", icon: MessagesSquare },
   { href: "/find-groups", label: "Find groups", icon: Compass },
   { href: "/public-notes", label: "Public notes", icon: Globe },
+  { href: "/saved", label: "Saved notes", icon: Bookmark },
   { href: "/pdf-maker", label: "PDF maker", icon: FileDown },
 ];
 

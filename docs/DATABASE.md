@@ -12,6 +12,11 @@ PostgreSQL 15+. Migrations live in `supabase/migrations/` and run in order:
 | `0002_rls_and_functions.sql` | Grants, Row Level Security, triggers, trusted functions, `public_notes` view, private `documents` bucket |
 | `0003_avatars_bucket.sql` | Public `avatars` bucket row (legacy; files now live on disk) |
 | `0004_local_auth.sql` | Password hashes, `auth.sessions`, `auth.tokens` (self-hosted auth) |
+| `0005_college_photos.sql` | `colleges.logo_path` |
+| `0006_course_term_label.sql` | `courses.term_label` (Semester / Year), exposed in `public_notes` |
+| `0007_groups.sql` | User-created groups replace semester workspaces (data converted in place) |
+| `0008_chat.sql`, `0009_sliding_rate_limit.sql` | Chat rooms/messages/DMs/blocks; sliding-window rate limiter |
+| `0010_public_content_and_events.sql` | Note view/download counters, saved notes (`note_saves`), group events + reminder job, subject slugs and course info in the public views, search indexes |
 | `0005_college_photos.sql` | `colleges.logo_path` (optional college photo, stored on disk) |
 | `0006_course_term_label.sql` | `courses.term_label` (Semester vs Year) |
 | `0007_groups.sql` | **User-created groups** replace semester workspaces (converts existing data) |

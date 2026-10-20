@@ -3,6 +3,15 @@ import { ArrowRight, BookMarked, Compass, FileDown, FileText, MessagesSquare, Pl
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { GroupAvatar } from "@/components/group-avatar";
 import { IconTile } from "@/components/ui/misc";
+import { HomeDiscover } from "@/components/public/home-discover";
+import { JsonLd } from "@/components/public/json-ld";
+import { abs, pageMeta } from "@/lib/seo";
+
+export const metadata = pageMeta({
+  title: "EduSathi: study groups, notes and exam prep for students in Nepal",
+  description: "Join your semester's study group, share notes privately, find public notes by college and subject, and prepare for exams together. Free for students in Nepal.",
+  path: "/", imageTitle: "Your Semester. Your Notes. Your Community.",
+});
 
 const STEPS = [
   { icon: Plus, t: "Create or find a group", d: "Start one for your class or homework in a minute — or search public groups and join." },
@@ -21,6 +30,10 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
+      <JsonLd data={[
+        { "@context": "https://schema.org", "@type": "Organization", name: "EduSathi", url: abs("/"), logo: abs("/pwa-icon/512") },
+        { "@context": "https://schema.org", "@type": "WebSite", name: "EduSathi", url: abs("/"), potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: abs("/search?q={search_term_string}") }, "query-input": "required name=search_term_string" } },
+      ]} />
       <main id="main">
         <section className="bg-hero relative overflow-hidden border-b border-line">
           <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-14 sm:pt-20 lg:grid-cols-[1.05fr_1fr]">
@@ -62,6 +75,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <HomeDiscover />
 
         <section className="mx-auto max-w-3xl px-4 py-20" aria-labelledby="faq">
           <p className="eyebrow text-center">FAQ</p><h2 id="faq" className="mt-2 text-center text-3xl font-extrabold">Questions, answered</h2>

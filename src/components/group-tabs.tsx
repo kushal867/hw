@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookMarked, FileText, LayoutGrid, Library, MessageCircle, MessagesSquare, Settings2, Users } from "lucide-react";
+import { BookMarked, CalendarDays, FileText, LayoutGrid, Library, MessageCircle, MessagesSquare, Settings2, Users } from "lucide-react";
 import { useChatOptional } from "@/components/chat/chat-provider";
 
-export type TabCounts = { files: number; discussions: number; questions: number; members: number };
+export type TabCounts = { files: number; discussions: number; questions: number; members: number; events?: number };
 
 export function GroupTabs({ id, canModerate, hasSubjects, counts, chatRoomId }: { id: string; canModerate: boolean; hasSubjects: boolean; counts: TabCounts; chatRoomId: string | null }) {
   const path = usePathname();
@@ -17,6 +17,7 @@ export function GroupTabs({ id, canModerate, hasSubjects, counts, chatRoomId }: 
     ...(chatRoomId ? [{ s: "/chat", label: "Chat", icon: MessageCircle, n: undefined as number | undefined, alert: chatUnread }] : []),
     { s: "/discussions", label: "Discussions", icon: MessagesSquare, n: counts.discussions },
     { s: "/questions", label: "Questions", icon: BookMarked, n: counts.questions },
+    { s: "/events", label: "Events", icon: CalendarDays, n: counts.events },
     { s: "/members", label: "Members", icon: Users, n: counts.members },
     ...(canModerate ? [{ s: "/settings", label: "Manage", icon: Settings2 }] : []),
   ];

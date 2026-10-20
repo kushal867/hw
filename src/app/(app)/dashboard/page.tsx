@@ -2,6 +2,8 @@ import Link from "next/link";
 import { BookMarked, Check, Compass, FileDown, FileText, MessagesSquare, Plus, Sparkles, Upload, Users } from "lucide-react";
 import { GroupAvatar } from "@/components/group-avatar";
 import { EmptyState, IconTile, SectionTitle } from "@/components/ui/misc";
+import { EventRow } from "@/components/event-row";
+import { GroupCard } from "@/components/public/cards";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/server-db";
 import { termName, timeAgo } from "@/lib/format";
@@ -30,6 +32,16 @@ export default async function Dashboard() {
     ...(posts?.data ?? []).map((d: any): Item => ({ id: d.id, kind: "discussions", text: d.title, at: d.created_at, href: `/groups/${d.group_id}/discussions/${d.id}`, group: nameOf.get(d.group_id) ?? "" })),
     ...(qs?.data ?? []).map((d: any): Item => ({ id: d.id, kind: "questions", text: d.question_text, at: d.created_at, href: `/groups/${d.group_id}/questions`, group: nameOf.get(d.group_id) ?? "" })),
   ].sort((a, b) => +new Date(b.at) - +new Date(a.at)).slice(0, 8);
+
+  // Next 5 exams / deadlines across all my groups (row-level security already limits this to groups I belong to).
+  const { data: upcoming } = ids.length ? await supabase.from("group_events").select("id,title,description,kind,starts_at,group_id").in("group_id", ids).gte("starts_at", new Date().toISOString()).order("starts_at").limit(5) : { data: [] as any[] };
+  // Public groups that match my profile (same semester, else program, else college) that I have not joined yet.
+  let picks: any[] = [];
+  const near = profile.semester_id ? { col: "semester_id", val: profile.semester_id } : profile.course_id ? { col: "course_id", val: profile.course_id } : profile.college_id ? { col: "college_id", val: profile.college_id } : null;
+  if (near) {
+    const { data } = await supabase.from("group_directory").select("*").eq(near.col, near.val).order("member_count", { ascending: false }).limit(8);
+    picks = (data ?? []).filter((g: any) => !ids.includes(g.id)).slice(0, 3);
+  }
 
   const first = ids[0];
   const steps = [
@@ -80,6 +92,10 @@ export default async function Dashboard() {
                     <span className="badge-muted mt-1.5 capitalize">{m.role}</span></div></Link></li>))}</ul>)}
           </section>
 
+          {picks.length > 0 && (
+            <section aria-labelledby="gfy"><SectionTitle action={<Link href="/find-groups" className="text-sm font-semibold text-brand-700 hover:underline">More</Link>}><span id="gfy">Groups for you</span></SectionTitle>
+              <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{picks.map((g: any) => <li key={g.id}><GroupCard g={g} /></li>)}</ul></section>)}
+
           {ids.length > 0 && (
             <section aria-labelledby="act"><SectionTitle><span id="act">Latest activity</span></SectionTitle>
               {!feed.length ? <div className="card p-6 text-center text-sm text-muted">Nothing yet. Upload a PDF or start a discussion to get things moving.</div> : (
@@ -91,6 +107,9 @@ export default async function Dashboard() {
         </div>
 
         <aside className="space-y-6">
+          {!!upcoming?.length && (
+            <section aria-labelledby="dl"><SectionTitle><span id="dl">Coming up</span></SectionTitle>
+              <ul className="card divide-y divide-line">{upcoming.map((e: any) => <li key={e.id}><EventRow e={e} group={nameOf.get(e.group_id)} href={`/groups/${e.group_id}/events`} /></li>)}</ul></section>)}
           {doneCount < steps.length && (
             <section className="card p-5" aria-labelledby="gs">
               <div className="mb-1 flex items-center gap-2"><Sparkles className="h-4 w-4 text-brand-600" aria-hidden /><h2 id="gs" className="font-bold">Getting started</h2></div>

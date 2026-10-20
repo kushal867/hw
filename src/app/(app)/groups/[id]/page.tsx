@@ -7,6 +7,7 @@ import { groupAccess, loadGroup } from "@/lib/group";
 import { createClient } from "@/lib/server-db";
 import { formatDate, plural, timeAgo } from "@/lib/format";
 import { leaveGroup } from "@/app/actions/groups";
+import { EventRow } from "@/components/event-row";
 
 const POLICY = { open: "Anyone can join instantly", approval: "People request to join and a moderator approves", invite_only: "Invitation only" } as const;
 
@@ -15,6 +16,7 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
   const a = await groupAccess(id);
   const group = await loadGroup(id);
   const supabase = await createClient();
+  const { data: events } = await supabase.from("group_events").select("id,title,description,kind,starts_at").eq("group_id", id).gte("starts_at", new Date().toISOString()).order("starts_at").limit(3);
   const [docs, posts, qs, members] = await Promise.all([
     supabase.from("documents").select("id,title,created_at,profiles(display_name)").eq("group_id", id).neq("moderation_status", "removed").order("created_at", { ascending: false }).limit(5),
     supabase.from("discussion_posts").select("id,title,created_at,profiles(display_name)").eq("group_id", id).eq("status", "visible").order("created_at", { ascending: false }).limit(5),
@@ -30,6 +32,10 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-6">
+      {!!events?.length && (
+        <section aria-labelledby="upc"><SectionTitle action={<Link href={`/groups/${id}/events`} className="text-sm font-semibold text-brand-700 hover:underline">Calendar</Link>}><span id="upc">Coming up</span></SectionTitle>
+          <ul className="card divide-y divide-line">{events.map((e: any) => <li key={e.id}><EventRow e={e} href={`/groups/${id}/events`} /></li>)}</ul></section>)}
       <section aria-labelledby="act">
         <SectionTitle><span id="act">Recent activity</span></SectionTitle>
         {!feed.length ? (
@@ -48,6 +54,7 @@ export default async function Overview({ params }: { params: Promise<{ id: strin
               <div className="min-w-0"><p className="text-sm"><span className="font-semibold">{i.by ?? "Someone"}</span> <span className="text-muted">{i.verb}</span></p>
                 <p className="mt-0.5 line-clamp-1 font-semibold">{i.text}</p><p className="mt-0.5 text-xs text-muted">{timeAgo(i.at)}</p></div></Link></li>))}</ul>)}
       </section>
+      </div>
 
       <aside className="space-y-5">
         <section className="card p-5" aria-labelledby="about">

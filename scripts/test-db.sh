@@ -10,6 +10,7 @@ psql -q -v ON_ERROR_STOP=1 -d $DB -f supabase/tests_stub.sql
 for f in supabase/migrations/*.sql; do psql -q -v ON_ERROR_STOP=1 -d $DB -f "$f"; done
 psql -q -v ON_ERROR_STOP=1 -d $DB -o /dev/null -f supabase/tests/rls.test.sql
 psql -q -v ON_ERROR_STOP=1 -d $DB -o /dev/null -f supabase/tests/chat.test.sql
+psql -q -v ON_ERROR_STOP=1 -d $DB -o /dev/null -f supabase/tests/content.test.sql
 
 UP=edusathi_upgrade
 psql -q -d postgres -c "drop database if exists $UP" -c "create database $UP"
@@ -18,6 +19,8 @@ for f in supabase/migrations/000[1-6]_*.sql; do psql -q -v ON_ERROR_STOP=1 -d $U
 psql -q -v ON_ERROR_STOP=1 -d $UP -f supabase/tests/legacy_fixture.sql
 psql -q -v ON_ERROR_STOP=1 -d $UP -f supabase/migrations/0007_groups.sql
 psql -q -v ON_ERROR_STOP=1 -d $UP -f supabase/migrations/0008_chat.sql
+psql -q -v ON_ERROR_STOP=1 -d $UP -f supabase/migrations/0009_sliding_rate_limit.sql
+psql -q -v ON_ERROR_STOP=1 -d $UP -f supabase/migrations/0010_public_content_and_events.sql
 psql -q -v ON_ERROR_STOP=1 -d $UP -o /dev/null -f supabase/tests/upgrade.test.sql
 
 # 3) Query layer (embeds, RLS per user, rpc, groups) against a fresh database loaded with fixtures.

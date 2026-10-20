@@ -4,6 +4,11 @@ Free student community, homework and PDF-sharing platform for Nepal. **Any stude
 
 > Your Semester. Your Notes. Your Community.
 
+## Features
+Student-created groups (public/private, optional college → program → term link) · private PDFs, discussions, exam-question bank · real-time group chat and DMs ·
+group calendar for exams/deadlines with reminders · public library of reviewed notes with downloads/views, saved notes and search · colleges → programs → terms → subjects
+pages and study guides for search engines · PDF maker · moderation tools. See `docs/CHAT.md`, `docs/DATABASE.md`, `docs/DEPLOY.md`.
+
 ## Configuration
 
 | Variable | Notes |
@@ -12,6 +17,7 @@ Free student community, homework and PDF-sharing platform for Nepal. **Any stude
 | `NEXT_PUBLIC_SITE_URL` | Public URL, used in emails and invite links (`https://www.edusathi.tech` in production) |
 | `STORAGE_DIR` | Directory for uploaded PDFs (private) and avatars (public) |
 | `MAX_UPLOAD_MB` | Optional, default 10 |
+| `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`, `NEXT_PUBLIC_ADSENSE_*`, `ADSENSE_PUBLISHER_ID` | Optional, see `docs/DEPLOY.md` (public site, search engines, ads) |
 | `SMTP_HOST/PORT/USER/PASS/FROM` | Optional. Without SMTP, sign-ups are auto-verified and reset links go to the server log |
 
 ## Run locally

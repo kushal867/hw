@@ -3,14 +3,17 @@
 // Content-Security-Policy. Next.js needs inline bootstrap scripts/styles, so 'unsafe-inline' is allowed for those two only;
 // everything else is locked to our own origin: no third-party scripts, no framing by other sites, no <base>/<object> tricks,
 // forms and fetch/EventSource may only talk to ourselves.
+// Google AdSense is allowed ONLY when NEXT_PUBLIC_ADSENSE_CLIENT is set at build time; otherwise the policy stays fully locked down.
+const ads = Boolean(process.env.NEXT_PUBLIC_ADSENSE_CLIENT);
+const G = "https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.g.doubleclick.net https://partner.googleadservices.com https://tpc.googlesyndication.com https://www.googletagservices.com https://adservice.google.com";
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${ads ? ` ${G}` : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  `img-src 'self' data: blob:${ads ? " https:" : ""}`,
   "font-src 'self' data:",
-  "connect-src 'self'",
-  "frame-src 'self'",
+  `connect-src 'self'${ads ? ` ${G} https://*.google.com` : ""}`,
+  `frame-src 'self'${ads ? ` ${G}` : ""}`,
   "media-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",

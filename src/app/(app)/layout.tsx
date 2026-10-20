@@ -29,13 +29,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="min-w-0 pb-24 lg:pb-0">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-surface/90 px-4 backdrop-blur lg:px-8">
           <div className="lg:hidden"><Logo href="/dashboard" compact /></div>
-          <form action="/find-groups" role="search" className="relative hidden max-w-md flex-1 sm:block">
+          <form action="/search" role="search" className="relative hidden max-w-md flex-1 sm:block">
             <Search className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-slate-500" aria-hidden />
-            <label htmlFor="global-q" className="sr-only">Search groups</label>
-            <input id="global-q" name="q" placeholder="Search groups…" className="input !min-h-[40px] rounded-full bg-slate-100/80 pl-10 hover:border-line focus:bg-surface" />
+            <label htmlFor="global-q" className="sr-only">Search EduSathi</label>
+            <input id="global-q" name="q" placeholder="Search groups, notes, subjects…" className="input !min-h-[40px] rounded-full bg-slate-100/80 pl-10 hover:border-line focus:bg-surface" />
           </form>
           <div className="ml-auto flex items-center gap-1">
-            <Link href="/find-groups" className="btn-ghost !px-2.5 sm:hidden" aria-label="Search groups"><Search className="h-5 w-5" /></Link>
+            <Link href="/search" className="btn-ghost !px-2.5 sm:hidden" aria-label="Search"><Search className="h-5 w-5" /></Link>
             <Link href="/notifications" className="relative grid h-10 w-10 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100" aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}>
               <Bell className="h-5 w-5" aria-hidden />{unread > 0 && <span className="absolute right-1 top-1 grid min-w-[18px] place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-[18px] text-white ring-2 ring-white">{unread > 9 ? "9+" : unread}</span>}
             </Link>

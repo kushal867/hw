@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { FileText, Search } from "lucide-react";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
+import { NoteCard } from "@/components/public/cards";
+import { pageMeta } from "@/lib/seo";
 import { EmptyState, ErrorState, NotConfigured, Pagination } from "@/components/ui/misc";
 import { createClient } from "@/lib/server-db";
 import { isConfigured } from "@/lib/env";
 import { CATEGORIES, formatBytes, formatDate, termName } from "@/lib/format";
 
-export const metadata = { title: "Public Notes" };
+export const metadata = pageMeta({ title: "Public notes by college, semester and subject", description: "Browse study notes, previous question papers and revision material shared by students and approved by reviewers. Search by college, semester, subject and category.", path: "/public-notes", imageTitle: "Public study notes" });
 const PAGE = 12;
 
 export default async function PublicNotes({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -18,7 +20,9 @@ export default async function PublicNotes({ searchParams }: { searchParams: Prom
     const supabase = await createClient();
     const [{ data: colleges }] = await Promise.all([supabase.from("colleges").select("id,name").order("name")]);
     // The public_notes view only ever contains approved + public documents.
-    let q = supabase.from("public_notes").select("*").order(sp.sort === "relevance" && sp.q ? "title" : "published_at", { ascending: sp.sort === "relevance" && !!sp.q });
+    let q = supabase.from("public_notes").select("*");
+    q = sp.sort === "popular" ? q.order("download_count", { ascending: false }).order("view_count", { ascending: false }).order("published_at", { ascending: false })
+      : sp.sort === "relevance" && sp.q ? q.order("title") : q.order("published_at", { ascending: false });
     if (sp.q) q = q.ilike("title", `%${sp.q.replace(/[%_\\]/g, "\\$&")}%`);
     if (sp.college) q = q.eq("college_id", sp.college);
     if (sp.category && CATEGORIES[sp.category]) q = q.eq("category", sp.category);
@@ -34,7 +38,7 @@ export default async function PublicNotes({ searchParams }: { searchParams: Prom
         <div><label htmlFor="college" className="sr-only">College</label><select id="college" name="college" defaultValue={sp.college ?? ""} className="input"><option value="">All colleges</option>{colleges?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
         <div><label htmlFor="semester" className="sr-only">Semester</label><select id="semester" name="semester" defaultValue={sp.semester ?? ""} className="input"><option value="">All semesters</option>{Array.from({ length: 8 }, (_, i) => <option key={i} value={i + 1}>Semester {i + 1}</option>)}</select></div>
         <div><label htmlFor="category" className="sr-only">Category</label><select id="category" name="category" defaultValue={sp.category ?? ""} className="input"><option value="">All categories</option>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-        <div><label htmlFor="sort" className="sr-only">Sort</label><select id="sort" name="sort" defaultValue={sp.sort ?? "newest"} className="input"><option value="newest">Newest</option><option value="relevance">Relevance</option></select></div>
+        <div><label htmlFor="sort" className="sr-only">Sort</label><select id="sort" name="sort" defaultValue={sp.sort ?? "newest"} className="input"><option value="newest">Newest</option><option value="popular">Most downloaded</option><option value="relevance">Relevance</option></select></div>
         <input name="subject" defaultValue={sp.subject} placeholder="Subject" aria-label="Subject" className="input lg:col-span-2" />
         <button className="btn-primary lg:col-span-1">Search</button>
       </form>
@@ -42,14 +46,7 @@ export default async function PublicNotes({ searchParams }: { searchParams: Prom
         <EmptyState icon={FileText} title="No public notes found">Public notes appear here after the uploader publishes them and a reviewer approves them.</EmptyState>
       ) : (<>
         <ul className="grid gap-4 md:grid-cols-2">
-          {rows.map((n) => (
-            <li key={n.id}><Link href={`/public-notes/${n.id}`} className="card card-hover flex h-full gap-4 p-5">
-              <span aria-hidden className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-600"><FileText className="h-6 w-6" /></span>
-              <div className="min-w-0 flex-1"><span className="badge">{CATEGORIES[n.category]}</span>
-                <h2 className="mt-2 text-[15px] font-bold leading-snug">{n.title}</h2>
-                <p className="mt-1 line-clamp-2 text-sm text-muted">{[n.college_name, n.course_name, (n.semester_number ? termName(n.term_label, n.semester_number) : null), n.subject_name].filter(Boolean).join(" · ") || "Shared by a student group"}</p>
-                <p className="mt-3 text-xs text-muted">By {n.uploader_name} · {formatBytes(n.size_bytes)} · {formatDate(n.published_at)}</p></div>
-            </Link></li>))}
+          {rows.map((n) => <li key={n.id}><NoteCard n={n} /></li>)}
         </ul>
         <Pagination page={page} hasNext={(data?.length ?? 0) > PAGE} base={base} /></>)}
     </>);

@@ -35,3 +35,24 @@ Rollback: `ln -sfn releases/<previous> /opt/edusathi/current && systemctl restar
 `curl https://www.edusathi.tech/api/health` (database / storage / realtime), `journalctl -u 'edusathi@*' -f`, `systemctl status edusathi@3040 edusathi@3041`.
 The chat end-to-end suite runs against any URL: `BASE_URL=https://www.edusathi.tech CHROME=/usr/bin/google-chrome node scripts/e2e-chat.mjs`
 (it creates `@example.com` users and groups; delete them afterwards).
+
+## Public site, search engines and ads
+The public pages (home, colleges → programs → terms → subjects, public notes, public groups at `/g/<id>`, guides, about, legal) are server-rendered with
+canonical URLs, Open Graph/Twitter cards (`/og?title=…`), JSON-LD, `robots.txt`, a database-generated `sitemap.xml` and a web manifest. Empty template pages
+(a term with no subjects/notes/groups, a subject with no notes) are `noindex` and left out of the sitemap, so search engines only see real content.
+
+Settings that are baked in at **build time** go into `.env.production.local` on the machine that runs `scripts/deploy.sh` (it is git-ignored):
+```
+NEXT_PUBLIC_CONTACT_EMAIL=you@example.com                  # shown on Contact and Privacy pages
+NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=xxxxxxxx              # Google Search Console "HTML tag" token
+NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-1234567890123456         # enables AdSense (consent banner, script, CSP) - leave unset until approved
+NEXT_PUBLIC_ADSENSE_SLOT=1234567890                        # optional manual ad unit id (auto ads need no slot)
+```
+and the runtime variable `ADSENSE_PUBLISHER_ID=pub-1234567890123456` in `/opt/edusathi/env` (served at `/ads.txt`). With these unset, no ad code loads and
+the Content-Security-Policy stays fully locked down. Ads are loaded only after the visitor accepts the consent banner and appear only on public pages.
+
+Submit `https://www.edusathi.tech/sitemap.xml` in Google Search Console after verifying the site.
+
+## Event reminders
+`/etc/cron.d/edusathi-reminders` runs `select run_event_reminders()` every 15 minutes. It notifies every active member once, when a group event is
+less than 24 hours away (and marks it reminded). Log: `/var/log/edusathi-reminders.log` (only written when reminders were sent).

@@ -42,3 +42,27 @@ export const POST_TONE: Record<string, string> = {
   general: "bg-slate-100 text-slate-700", homework_help: "bg-amber-50 text-amber-700", notes_request: "bg-indigo-50 text-indigo-700",
   exam_prep: "bg-rose-50 text-rose-700", announcement: "bg-emerald-50 text-emerald-700",
 };
+
+// ───────── group events (exams, deadlines, classes) ─────────
+export const EVENT_KINDS: Record<string, string> = { exam: "Exam", assignment: "Assignment deadline", class: "Class", other: "Event" };
+
+/** <input type="datetime-local"> has no timezone; EduSathi is for Nepal, which is UTC+05:45 all year (no daylight saving). */
+export function nepalLocalToDate(local: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(local)) return null;
+  const d = new Date(`${local}:00+05:45`);
+  return Number.isNaN(+d) ? null : d;
+}
+
+const nepalDay = (d: Date) => Math.floor((+d + (5 * 60 + 45) * 60_000) / 86_400_000);
+/** "Today", "Tomorrow", "In 5 days", "Yesterday", "3 days ago": by Nepal calendar days, not 24-hour blocks. */
+export function whenLabel(iso: string | Date, now = new Date()) {
+  const diff = nepalDay(new Date(iso)) - nepalDay(now);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Tomorrow";
+  if (diff === -1) return "Yesterday";
+  return diff > 0 ? `In ${diff} days` : `${-diff} days ago`;
+}
+
+/** URL slug for a subject; mirrors public.subject_slug() in the database. Names without latin letters fall back to the id prefix. */
+export const subjectSlug = (name: string, id: string) =>
+  name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || `s-${id.slice(0, 8)}`;
