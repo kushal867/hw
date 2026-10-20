@@ -83,18 +83,18 @@ export default async function GroupLayout({ children, params }: { children: Reac
   const fullHeader = (
     <header className="card overflow-hidden">
       <Cover id={id} />
-      <div className="relative flex flex-wrap items-start gap-x-5 gap-y-2 px-5 pb-5 sm:gap-y-3 sm:px-8 sm:pb-6">
-        <GroupAvatar name={group.name} seed={id} size={72} className="-mt-9 ring-4 ring-surface sm:-mt-12 sm:!h-20 sm:!w-20" />
-        <div className="min-w-0 flex-1 basis-48 pt-3 sm:basis-64 sm:pt-4">
+      <div className="relative flex flex-wrap items-start gap-x-4 gap-y-2 px-4 pb-4 sm:gap-x-5 sm:gap-y-3 sm:px-8 sm:pb-6">
+        <GroupAvatar name={group.name} seed={id} size={56} className="-mt-7 ring-4 ring-surface sm:-mt-12 sm:!h-20 sm:!w-20 sm:!text-[30px]" />
+        <div className="min-w-0 flex-1 basis-48 pt-2 sm:basis-64 sm:pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="break-words text-xl font-extrabold leading-tight sm:text-[28px]">{group.name}</h1>
             <span className="badge-muted">{group.visibility === "public" ? <Globe className="h-3 w-3" aria-hidden /> : <Lock className="h-3 w-3" aria-hidden />}{group.visibility === "public" ? "Public" : "Private"}</span>
           </div>
           <p className="mt-1 text-sm text-muted">{[where, plural(counts.members, "member")].filter(Boolean).join(" · ")}</p>
         </div>
-        <div className="flex w-full flex-wrap gap-2 pt-1 sm:w-auto sm:pt-4">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:pt-4">
           <Link href={`/groups/${id}/files`} className="btn-secondary hidden sm:inline-flex"><Upload className="h-4 w-4" aria-hidden />Upload PDF</Link>
-          {a.canModerate && <Link href={`/groups/${id}/settings`} className="btn-primary"><Plus className="h-4 w-4" aria-hidden />Invite people</Link>}
+          {a.canModerate && <Link href={`/groups/${id}/settings`} className="btn-primary max-sm:!min-h-[38px] max-sm:w-full"><Plus className="h-4 w-4" aria-hidden />Invite people</Link>}
         </div>
       </div>
     </header>);

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, CheckCheck, FileCheck, MessageCircle, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { Bell, CalendarDays, CheckCheck, FileCheck, MessageCircle, ShieldCheck, UserPlus, Users } from "lucide-react";
 import { ActionForm } from "@/components/ui/action-form";
 import { LiveRefresh } from "@/components/live-refresh";
 import { EmptyState, PageHeader } from "@/components/ui/misc";
@@ -12,7 +12,7 @@ export const metadata = { title: "Notifications" };
 const ICON: Record<string, { icon: typeof Bell; tone: string }> = {
   reply: { icon: MessageCircle, tone: "bg-sky-50 text-sky-600" }, join: { icon: UserPlus, tone: "bg-emerald-50 text-emerald-600" },
   join_request: { icon: UserPlus, tone: "bg-amber-50 text-amber-600" }, publication: { icon: FileCheck, tone: "bg-indigo-50 text-indigo-600" },
-  group: { icon: Users, tone: "bg-violet-50 text-violet-600" },
+  group: { icon: Users, tone: "bg-violet-50 text-violet-600" }, event: { icon: CalendarDays, tone: "bg-rose-50 text-rose-600" },
 };
 
 export default async function Notifications() {
@@ -22,7 +22,7 @@ export default async function Notifications() {
   return (
     <div className="mx-auto max-w-3xl">
       <LiveRefresh table="notifications" filter={`user_id=eq.${profile.id}`} />
-      <PageHeader title="Notifications" sub="Replies, join requests and approvals.">{unread && <ActionForm action={async () => { "use server"; return markRead(); }}><button className="btn-secondary"><CheckCheck className="h-4 w-4" aria-hidden />Mark all read</button></ActionForm>}</PageHeader>
+      <PageHeader title="Notifications" sub="Replies, join requests, deadlines and approvals.">{unread && <ActionForm action={async () => { "use server"; return markRead(); }}><button className="btn-secondary"><CheckCheck className="h-4 w-4" aria-hidden />Mark all read</button></ActionForm>}</PageHeader>
       {!data?.length ? <EmptyState icon={Bell} title="You're all caught up">When classmates reply to you or a group needs your attention, it shows up here.</EmptyState> : (
         <ul className="card divide-y divide-line overflow-hidden">{data.map((n) => {
           const { icon: Icon, tone } = ICON[n.notification_type] ?? { icon: ShieldCheck, tone: "bg-slate-100 text-slate-600" };

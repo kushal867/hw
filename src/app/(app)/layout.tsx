@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <UserMenu name={profile.display_name} avatarPath={profile.avatar_path} isAdmin={profile.platform_role === "admin"} />
           </div>
         </header>
-        <main id="main" className="mx-auto max-w-5xl px-4 py-7 lg:px-8 lg:py-9">{children}</main>
+        <main id="main" className="mx-auto max-w-6xl px-4 py-7 lg:px-8 lg:py-9">{children}</main>
       </div>
       <BottomNav />
     </div>

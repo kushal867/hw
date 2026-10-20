@@ -35,7 +35,7 @@ export default async function Members({ params }: { params: Promise<{ id: string
                 <ActionForm action={async () => { "use server"; return decideRequest(id, m.user_id, false); }}><button className="btn-secondary !min-h-[38px]"><X className="h-4 w-4" aria-hidden />Decline</button></ActionForm></span></li>))}</ul></section>)}
 
       <section aria-labelledby="mem"><SectionTitle><span id="mem">Members ({active.length})</span></SectionTitle>
-        <ul className="grid gap-3 md:grid-cols-2">{active.map((m: any) => {
+        <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">{active.map((m: any) => {
           const canManage = m.user_id !== a.user.id && m.role !== "owner" && a.canModerate && (isOwner || m.role === "member");
           return (
             <li key={m.user_id} className="card flex items-center gap-3.5 p-4">

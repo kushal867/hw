@@ -61,24 +61,27 @@ export default async function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-indigo-600 to-violet-600 p-6 text-white shadow-pop sm:p-8">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-indigo-600 to-violet-600 p-5 text-white shadow-pop sm:p-8">
         <div aria-hidden className="absolute -right-10 -top-16 h-56 w-56 rounded-full bg-white/10 blur-2xl" /><div aria-hidden className="absolute -bottom-20 right-24 h-52 w-52 rounded-full bg-fuchsia-400/20 blur-3xl" />
         <div className="relative max-w-xl">
           <p className="text-sm font-semibold text-indigo-100">Namaste</p>
-          <h1 className="mt-1 text-3xl font-extrabold sm:text-4xl">{firstName}, let&apos;s study together.</h1>
-          <p className="mt-2 text-[15px] leading-relaxed text-indigo-100">{ids.length ? "Pick up where your classmates left off, or share something new today." : "Create a group for your class or homework, or find one your classmates already use."}</p>
-          <div className="mt-5 flex flex-wrap gap-2.5">
-            <Link href="/groups/new" className="btn-lg btn bg-white text-brand-700 hover:bg-indigo-50"><Plus className="h-4 w-4" aria-hidden />Create a group</Link>
-            <Link href="/find-groups" className="btn-lg btn border border-white/30 bg-white/10 text-white hover:bg-white/20"><Compass className="h-4 w-4" aria-hidden />Find groups</Link>
+          <h1 className="mt-1 text-2xl font-extrabold sm:text-4xl">{firstName}, let&apos;s study together.</h1>
+          <p className="mt-2 hidden text-[15px] leading-relaxed text-indigo-100 sm:block">{ids.length ? "Pick up where your classmates left off, or share something new today." : "Create a group for your class or homework, or find one your classmates already use."}</p>
+          <div className="mt-4 flex flex-wrap gap-2 sm:mt-5 sm:gap-2.5">
+            <Link href="/groups/new" className="btn sm:btn-lg bg-white text-brand-700 hover:bg-indigo-50"><Plus className="h-4 w-4" aria-hidden />Create a group</Link>
+            <Link href="/find-groups" className="btn sm:btn-lg border border-white/30 bg-white/10 text-white hover:bg-white/20"><Compass className="h-4 w-4" aria-hidden />Find groups</Link>
           </div>
         </div>
       </section>
 
       <section aria-label="Quick actions"><ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">{quick.map((q) => (
-        <li key={q.label}><Link href={q.href} className="card card-hover flex h-full flex-col items-start gap-3 p-4"><IconTile icon={q.icon} tone={q.tone} /><span className="text-sm font-bold leading-snug">{q.label}</span></Link></li>))}</ul></section>
+        <li key={q.label}><Link href={q.href} className="card card-hover flex h-full items-center gap-3 p-3 sm:flex-col sm:items-start sm:p-4"><IconTile icon={q.icon} tone={q.tone} /><span className="text-sm font-bold leading-snug">{q.label}</span></Link></li>))}</ul></section>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="space-y-8">
+          {!!upcoming?.length && (
+            <section aria-labelledby="dl-m" className="lg:hidden"><SectionTitle action={<span className="text-xs font-semibold text-muted">{upcoming.length} upcoming</span>}><span id="dl-m">Coming up</span></SectionTitle>
+              <ul className="card divide-y divide-line">{upcoming.slice(0, 3).map((e: any) => <li key={e.id}><EventRow e={e} group={nameOf.get(e.group_id)} href={`/groups/${e.group_id}/events`} /></li>)}</ul></section>)}
           <section aria-labelledby="mg"><SectionTitle action={ids.length > 0 ? <Link href="/my-groups" className="text-sm font-semibold text-brand-700 hover:underline">See all</Link> : undefined}><span id="mg">Your groups</span></SectionTitle>
             {!active.length ? (
               <EmptyState icon={Users} title="You're not in a group yet" action={<div className="flex flex-wrap justify-center gap-2"><Link href="/groups/new" className="btn-primary">Create a group</Link><Link href="/find-groups" className="btn-secondary">Find groups</Link></div>}>
@@ -108,7 +111,7 @@ export default async function Dashboard() {
 
         <aside className="space-y-6">
           {!!upcoming?.length && (
-            <section aria-labelledby="dl"><SectionTitle><span id="dl">Coming up</span></SectionTitle>
+            <section aria-labelledby="dl" className="hidden lg:block"><SectionTitle><span id="dl">Coming up</span></SectionTitle>
               <ul className="card divide-y divide-line">{upcoming.map((e: any) => <li key={e.id}><EventRow e={e} group={nameOf.get(e.group_id)} href={`/groups/${e.group_id}/events`} /></li>)}</ul></section>)}
           {doneCount < steps.length && (
             <section className="card p-5" aria-labelledby="gs">

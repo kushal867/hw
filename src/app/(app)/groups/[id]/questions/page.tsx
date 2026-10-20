@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AutoSubmit } from "@/components/auto-submit";
 import { BadgeCheck, Bookmark, BookmarkCheck, BookMarked, FileDown, Flag, Info, Plus, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
@@ -51,10 +52,10 @@ export default async function Questions({ params, searchParams }: { params: Prom
         </details>)}
 
       <div className="flex flex-wrap items-center gap-2">
-        <form className="flex flex-1 flex-wrap gap-2" role="search">
+        <form className="flex flex-1 flex-wrap gap-2" role="search"><AutoSubmit />
           {!!subjects?.length && <select name="subject" aria-label="Subject" defaultValue={sp.subject ?? ""} className="input !w-auto"><option value="">All subjects</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
           <select name="type" aria-label="Type" defaultValue={sp.type ?? ""} className="input !w-auto"><option value="">All types</option>{Object.entries(QUESTION_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-          <button className="btn-secondary">Filter</button>{hasFilters && <Link href={`/groups/${id}/questions`} className="btn-ghost">Clear</Link>}</form>
+          <button className="sr-only">Apply filters</button>{hasFilters && <Link href={`/groups/${id}/questions`} className="btn-ghost">Clear</Link>}</form>
         {savedSet.size > 0 && <Link className="btn-primary" href={`/pdf-maker?group=${id}&saved=1`}><FileDown className="h-4 w-4" aria-hidden />PDF from my saved ({savedSet.size})</Link>}
       </div>
 

@@ -8,7 +8,7 @@ import { Breadcrumbs } from "@/components/public/breadcrumbs";
 import { SaveNoteButton } from "@/components/save-note-button";
 import { SiteFooter, SiteHeader } from "@/components/site-header";
 import { getCurrentUser } from "@/lib/auth";
-import { CATEGORIES, formatBytes, formatDate, termName } from "@/lib/format";
+import { CATEGORIES, formatBytes, formatDate, plural, termName } from "@/lib/format";
 import { recordNoteHit } from "@/lib/hits";
 import { loadNotesFor, subjectSlug, termHref } from "@/lib/public-data";
 import { createClient } from "@/lib/server-db";
@@ -58,7 +58,7 @@ export default async function NotePage({ params }: P) {
           {n.subject_name && n.subject_slug && <> · <Link className="hover:text-brand-700 hover:underline" href={`${termHref(n.college_slug, n.course_slug, n.semester_number)}/${n.subject_slug}`}>{n.subject_name}</Link></>}</>
       : (whereOf(n) || "Shared by a student group")}</p>
     <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-muted"><span>Shared by {n.uploader_name}</span><span>{formatBytes(n.size_bytes)}</span><span>{formatDate(n.published_at)}</span>
-      <span className="inline-flex items-center gap-1"><Eye className="h-3.5 w-3.5" aria-hidden />{n.view_count} views</span><span className="inline-flex items-center gap-1"><Download className="h-3.5 w-3.5" aria-hidden />{n.download_count} downloads</span></p>
+      <span className="inline-flex items-center gap-1"><Eye className="h-3.5 w-3.5" aria-hidden />{plural(n.view_count, "view")}</span><span className="inline-flex items-center gap-1"><Download className="h-3.5 w-3.5" aria-hidden />{plural(n.download_count, "download")}</span></p>
     {n.description && <p className="mt-4 whitespace-pre-line leading-relaxed text-slate-700">{n.description}</p>}
     <div className="mt-5 flex flex-wrap gap-2">
       <a className="btn-primary" href={`/api/public-notes/${n.id}/file?download=1`}><Download className="h-4 w-4" aria-hidden />Download</a>

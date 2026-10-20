@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Download, Eye, FileText, Flag, Globe, MoreHorizontal, Plus, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Download, Eye, FileText, Flag, Globe, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/ui/action-form";
+import { AutoSubmit } from "@/components/auto-submit";
 import { UploadForm } from "@/components/upload-form";
 import { EmptyState, ErrorState, Pagination } from "@/components/ui/misc";
 import { groupAccess, loadGroup } from "@/lib/group";
@@ -41,13 +42,16 @@ export default async function Files({ params, searchParams }: { params: Promise<
           <div className="border-t border-line p-5"><UploadForm groupId={id} subjects={subjects ?? []} maxMb={env.maxUploadBytes / 1024 / 1024} /></div>
         </details>)}
 
-      <form role="search" className="flex flex-wrap gap-2">
-        <div className="relative min-w-[200px] flex-1"><Search className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-500" aria-hidden /><label htmlFor="q" className="sr-only">Search PDFs</label><input id="q" name="q" defaultValue={sp.q} placeholder="Search PDFs by title" className="input pl-10" /></div>
-        <select name="category" aria-label="Category" defaultValue={sp.category ?? ""} className="input !w-auto"><option value="">All categories</option>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        {!!subjects?.length && <select name="subject" aria-label="Subject" defaultValue={sp.subject ?? ""} className="input !w-auto"><option value="">All subjects</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
-        <select name="sort" aria-label="Sort" defaultValue={sp.sort ?? "newest"} className="input !w-auto"><option value="newest">Newest</option><option value="title">Title A–Z</option></select>
-        <button className="btn-secondary"><SlidersHorizontal className="h-4 w-4" aria-hidden />Apply</button>
-        {hasFilters && <Link href={`/groups/${id}/files`} className="btn-ghost">Clear</Link>}
+      <form role="search" className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <AutoSubmit />
+        <div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-500" aria-hidden /><label htmlFor="q" className="sr-only">Search PDFs</label><input id="q" name="q" defaultValue={sp.q} placeholder="Search PDFs by title" className="input pl-10" /></div>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+          <select name="category" aria-label="Category" defaultValue={sp.category ?? ""} className="input !w-auto shrink-0"><option value="">All categories</option>{Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          {!!subjects?.length && <select name="subject" aria-label="Subject" defaultValue={sp.subject ?? ""} className="input !w-auto max-w-[220px] shrink-0"><option value="">All subjects</option>{subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select>}
+          <select name="sort" aria-label="Sort" defaultValue={sp.sort ?? "newest"} className="input !w-auto shrink-0"><option value="newest">Newest</option><option value="title">Title A–Z</option></select>
+          {hasFilters && <Link href={`/groups/${id}/files`} className="btn-ghost shrink-0">Clear</Link>}
+        </div>
+        <button className="sr-only">Apply filters</button>
       </form>
 
       {error ? <ErrorState /> : !rows.length ? <EmptyState icon={FileText} title={hasFilters ? "No PDFs match your search" : "No PDFs yet"}>{hasFilters ? "Try a different search or clear the filters." : a.role ? "Upload the first one above. It stays private to this group." : "No files to show."}</EmptyState> : (<>
